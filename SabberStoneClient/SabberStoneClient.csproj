@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GodSharp.Socket" Version="2019.1.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SabberStoneCommon\SabberStoneCommon.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="SabberStoneCore">
+      <HintPath>..\SabberStoneServer\lib\SabberStoneCore.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
