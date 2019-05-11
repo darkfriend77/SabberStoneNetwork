@@ -18,51 +18,50 @@ using SabberStoneCore.Tasks.PlayerTasks;
 
 namespace SabberStoneServer.Server
 {
-
-
-    public enum MatchState
-    {
-
-    }
-
     internal class MatchGame
     {
         private static readonly ILog Log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
-        private readonly int _id;
-
-        private readonly string _token;
+        public int GameId { get; }
 
         private readonly GameServer _gameServer;
 
-        private Random _random;
+        private readonly Random _random;
 
-        private readonly int _gameId;
+        public UserInfoData Player1 { get; }
 
-        private readonly UserInfoData _player1;
+        public PlayState Play1State => _game.Player1.PlayState;
 
         private PowerAllOptions _powerAllOptionsPlayer1;
 
-        private readonly UserInfoData _player2;
+        public UserInfoData Player2 { get; }
+
+        public PlayState Play2State => _game.Player2.PlayState;
 
         private PowerAllOptions _powerAllOptionsPlayer2;
 
         private Game _game;
 
-        private UserInfoData UserById(int id) => _player1.Id == id ? _player1 : _player2.Id == id ? _player2 : null;
+        private readonly int _id;
+
+        private readonly string _token;
+
+        private UserInfoData UserById(int id) => Player1.Id == id ? Player1 : Player2.Id == id ? Player2 : null;
+
+        public bool IsFinished => Player1.PlayerState == PlayerState.Quit && Player2.PlayerState == PlayerState.Quit;
 
         public MatchGame(GameServer gameServer, int index, UserInfoData player1, UserInfoData player2)
         {
             _gameServer = gameServer;
             _random = new Random();
-            _gameId = index;
-            _player1 = player1;
-            _player1.PlayerState = PlayerState.None;
-            _player2 = player2;
-            _player2.PlayerState = PlayerState.None;
+            GameId = index;
+            Player1 = player1;
+            Player1.PlayerState = PlayerState.None;
+            Player2 = player2;
+            Player2.PlayerState = PlayerState.None;
 
             _id = 2;
-            _token = $"matchgame{_gameId}";
+            _token = $"matchgame{GameId}";
 
             _game = null;
         }
@@ -70,17 +69,17 @@ namespace SabberStoneServer.Server
         public void Initialize()
         {
             // game invitation request for player 1
-            _player1.PlayerState = PlayerState.Invitation;
-            _player1.Connection.Send(DataPacketBuilder.RequestServerGameInvitation(_id, _token, _gameId, 1));
+            Player1.PlayerState = PlayerState.Invitation;
+            Player1.Connection.Send(DataPacketBuilder.RequestServerGameInvitation(_id, _token, GameId, 1));
 
             // game invitation request for player 2
-            _player2.PlayerState = PlayerState.Invitation;
-            _player2.Connection.Send(DataPacketBuilder.RequestServerGameInvitation(_id, _token, _gameId, 2));
+            Player2.PlayerState = PlayerState.Invitation;
+            Player2.Connection.Send(DataPacketBuilder.RequestServerGameInvitation(_id, _token, GameId, 2));
         }
 
         public void Start()
         {
-            Log.Info($"[_gameId:{_gameId}] Game creation is happening in a few seconds!!!");
+            Log.Info($"[_gameId:{GameId}] Game creation is happening in a few seconds!!!");
             var newGame = new Game(new GameConfig
             {
                 //StartPlayer = 1,
@@ -103,11 +102,11 @@ namespace SabberStoneServer.Server
             }
 
             _game = newGame;
-            Log.Info($"[_gameId:{_gameId}] Game creation done!");
+            Log.Info($"[_gameId:{GameId}] Game creation done!");
             _game.StartGame();
 
-            ProcessPowerHistoryData(1, _player1, _game.PowerHistory.Last);
-            ProcessPowerHistoryData(2, _player2, _game.PowerHistory.Last);
+            ProcessPowerHistoryData(1, Player1, _game.PowerHistory.Last);
+            ProcessPowerHistoryData(2, Player2, _game.PowerHistory.Last);
 
             SendPowerOptionsToPlayers();
         }
@@ -115,20 +114,20 @@ namespace SabberStoneServer.Server
         private void SendPowerOptionsToPlayers()
         {
             _powerAllOptionsPlayer1 = PowerOptionsBuilder.AllOptions(_game, _game.Player1.Options());
-            ProcessPowerOptionsData(1, _player1, _powerAllOptionsPlayer1);
+            ProcessPowerOptionsData(1, Player1, _powerAllOptionsPlayer1);
 
             _powerAllOptionsPlayer2 = PowerOptionsBuilder.AllOptions(_game, _game.Player2.Options());
-            ProcessPowerOptionsData(2, _player2, _powerAllOptionsPlayer2);
+            ProcessPowerOptionsData(2, Player2, _powerAllOptionsPlayer2);
         }
 
         private void ProcessPowerOptionsData(int playerId, UserInfoData userInfoData, PowerAllOptions allOptions)
         {
-            userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePowerOptions(_id, _token, _gameId, playerId, allOptions.Index, allOptions.PowerOptionList));
+            userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePowerOptions(_id, _token, GameId, playerId, allOptions.Index, allOptions.PowerOptionList));
         }
 
         private void ProcessPowerHistoryData(int playerId, UserInfoData userInfoData, List<IPowerHistoryEntry> powerHistoryLast)
         {
-            var buffer = DataPacketBuilder.RequestServerGamePowerHistory(_id, "matchgame", _gameId, playerId, powerHistoryLast);
+            var buffer = DataPacketBuilder.RequestServerGamePowerHistory(_id, "matchgame", GameId, playerId, powerHistoryLast);
 
             Log.Info($"BufferSize sending: {buffer.Length}");
             userInfoData.Connection.Send(buffer);
@@ -137,7 +136,10 @@ namespace SabberStoneServer.Server
         public void Stop()
         {
             // stop game for both players now!
-            Log.Warn($"[_gameId:{_gameId}] should be stopped here, isn't implemented!!!");
+            Log.Warn($"[_gameId:{GameId}] should be stopped here, isn't implemented!!!");
+
+            Player1.Connection.Send(DataPacketBuilder.RequestServerGameStop(_id, _token, GameId, _game.Player1.PlayState, _game.Player2.PlayState));
+            Player2.Connection.Send(DataPacketBuilder.RequestServerGameStop(_id, _token, GameId, _game.Player1.PlayState, _game.Player2.PlayState));
         }
 
         public void ProcessGameResponse(int dataPacketId, string dataPacketToken, GameResponse gameResponse)
@@ -155,7 +157,7 @@ namespace SabberStoneServer.Server
             {
                 case GameResponseType.Invitation:
                     _gameServer.ChangeUserState(userInfoData, UserState.Prepared);
-                    userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePreparation(_id, _token, _gameId));
+                    userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePreparation(_id, _token, GameId));
                     break;
 
                 case GameResponseType.Preparation:
@@ -163,10 +165,10 @@ namespace SabberStoneServer.Server
                     userInfoData.DeckType = gameResponsePreparation.DeckType;
                     userInfoData.DeckData = gameResponsePreparation.DeckData;
                     _gameServer.ChangeUserState(userInfoData, UserState.InGame);
-                    if (_player1.UserState == UserState.InGame && _player2.UserState == UserState.InGame)
+                    if (Player1.UserState == UserState.InGame && Player2.UserState == UserState.InGame)
                     {
-                        _player1.Connection.Send(DataPacketBuilder.RequestServerGameStart(_id, _token, _gameId, _player1, _player2));
-                        _player2.Connection.Send(DataPacketBuilder.RequestServerGameStart(_id, _token, _gameId, _player1, _player2));
+                        Player1.Connection.Send(DataPacketBuilder.RequestServerGameStart(_id, _token, GameId, Player1, Player2));
+                        Player2.Connection.Send(DataPacketBuilder.RequestServerGameStart(_id, _token, GameId, Player1, Player2));
                         Thread.Sleep(500);
                         Start();
                     }
@@ -174,7 +176,7 @@ namespace SabberStoneServer.Server
 
                 case GameResponseType.PowerOption:
                     var gameResponsePowerOption = JsonConvert.DeserializeObject<GameResponsePowerOption>(gameResponse.GameResponseData);
-                    var task = ProcessPowerOptionsData(gameResponsePowerOption.PowerOption, 0, 0, 0);
+                    var task = ProcessPowerOptionsData(gameResponsePowerOption.PowerOption, gameResponsePowerOption.Target, 0, gameResponsePowerOption.SubOption);
                     _game.Process(task);
                     if (_game.State == State.RUNNING)
                     {
@@ -183,6 +185,21 @@ namespace SabberStoneServer.Server
                     else
                     {
                         Stop();
+                    }
+                    break;
+
+                case GameResponseType.GameStop:
+                    var gameResponseGameStop = JsonConvert.DeserializeObject<GameResponseGameStop>(gameResponse.GameResponseData);
+                    switch (gameResponseGameStop.PlayerId)
+                    {
+                        case 1:
+                            Player1.PlayerState = PlayerState.Quit;
+                            break;
+                        case 2:
+                            Player2.PlayerState = PlayerState.Quit;
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
                     }
                     break;
 
@@ -226,6 +243,7 @@ namespace SabberStoneServer.Server
                                     ? (PlayerTask) HeroAttackTask.Any(_game.CurrentPlayer, target)
                                     : PlayCardTask.Any(_game.CurrentPlayer, source);
                                 break;
+
                             case CardType.HERO_POWER:
                                 task = HeroPowerTask.Any(_game.CurrentPlayer, target);
                                 break;
@@ -244,7 +262,7 @@ namespace SabberStoneServer.Server
                     throw new NotImplementedException();
             }
 
-            Log.Info($"{task.FullPrint()}");
+            Log.Info($"{task?.FullPrint()}");
 
             return task;
         }

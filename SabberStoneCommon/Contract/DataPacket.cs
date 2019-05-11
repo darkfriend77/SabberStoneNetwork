@@ -4,6 +4,7 @@ using System.IO;
 using Newtonsoft.Json;
 using ProtoBuf;
 using SabberStoneCommon.PowerObjects;
+using SabberStoneCore.Enums;
 using SabberStoneCore.Kettle;
 using SabberStoneCore.Model.Zones;
 
@@ -200,6 +201,27 @@ namespace SabberStoneCommon.Contract
                     })
             });
         }
+        public static byte[] RequestServerGameStop(int id, string token, int gameId, PlayState play1State, PlayState play2State)
+        {
+            return Serialize(new SabberDataPacket()
+            {
+                Id = id,
+                Token = token,
+                GameId = gameId,
+                MessageType = MessageType.GameRequest,
+                MessageData = JsonConvert.SerializeObject(
+                    new GameRequest
+                    {
+                        GameRequestType = GameRequestType.GameStop,
+                        GameRequestData = JsonConvert.SerializeObject(
+                            new GameRequestGameStop
+                            {
+                                Play1State = play1State,
+                                Play2State = play2State
+                            })
+                    })
+            });
+        }
         public static byte[] RequestServerGamePowerHistory(int id, string token, int gameId, int playerId, List<IPowerHistoryEntry> powerHistoryLast)
         {
             return Serialize(new SabberDataPacket()
@@ -306,6 +328,28 @@ namespace SabberStoneCommon.Contract
                                 Target = target,
                                 Position = position,
                                 SubOption = subOption
+
+                            })
+                    })
+            });
+        }
+        public static byte[] ResponseClientGameStop(int id, string token, int gameId, int playerId, RequestState requestState)
+        {
+            return Serialize(new SabberDataPacket()
+            {
+                Id = id,
+                Token = token,
+                GameId = gameId,
+                MessageType = MessageType.GameResponse,
+                MessageData = JsonConvert.SerializeObject(
+                    new GameResponse
+                    {
+                        RequestState = requestState,
+                        GameResponseType = GameResponseType.GameStop,
+                        GameResponseData = JsonConvert.SerializeObject(
+                            new GameResponseGameStop
+                            {
+                                PlayerId = playerId
                             })
                     })
             });

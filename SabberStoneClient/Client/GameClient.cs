@@ -12,7 +12,10 @@ using SabberStoneClient.Event;
 using SabberStoneCommon;
 using SabberStoneCommon.Contract;
 using SabberStoneCommon.PowerObjects;
+using SabberStoneCore.Enums;
 using SabberStoneCore.Kettle;
+using DeckType = SabberStoneCommon.Contract.DeckType;
+using GameType = SabberStoneCommon.Contract.GameType;
 using TcpClient = GodSharp.Sockets.TcpClient;
 
 namespace SabberStoneClient.Client
@@ -54,6 +57,8 @@ namespace SabberStoneClient.Client
         public UserInfo Player1 { get; private set; }
 
         public UserInfo Player2 { get; private set; }
+
+        public Dictionary<PlayState, int> Statistics { get; private set; }
 
         private readonly TcpClient _gameClient;
 
@@ -103,6 +108,8 @@ namespace SabberStoneClient.Client
 
             HistoryEntries = new ConcurrentQueue<IPowerHistoryEntry>();
             PowerOptionList = new List<PowerOption>();
+
+            Statistics = new Dictionary<PlayState, int>();
         }
 
         private void OnStopped(NetClientEventArgs<ITcpConnection> c)
@@ -331,7 +338,8 @@ namespace SabberStoneClient.Client
 
                         if (_isBot)
                         {
-                            var powerOption = PowerOptionList.ElementAt(_random.Next(PowerOptionList.Count));
+                            var powerOptionId = _random.Next(PowerOptionList.Count);
+                            var powerOption = PowerOptionList.ElementAt(powerOptionId);
                             var target = powerOption.MainOption?.Targets != null && powerOption.MainOption.Targets.Count > 0
                                 ? powerOption.MainOption.Targets.ElementAt(_random.Next(powerOption.MainOption.Targets.Count))
                                 : 0;
@@ -339,11 +347,28 @@ namespace SabberStoneClient.Client
                                 ? _random.Next(powerOption.SubOptions.Count)
                                 : 0;
                             ResponsePowerOption(powerOption, target, 0, subOption);
-                            Log("INFO", $"target:{target}, position:0, suboption: {subOption}, PRINT: {powerOption.Print()}");
+                            Log("INFO", $"target:{target}, position:0, suboption: {subOption} {powerOption.Print()}");
                             PowerOptionList.Clear();
                         }
                     }
 
+                    break;
+
+                case GameRequestType.GameStop:
+                    var gameRequestGameStop = JsonConvert.DeserializeObject<GameRequestGameStop>(gameRequest.GameRequestData);
+                    var playState = PlayerId == 1 ? gameRequestGameStop.Play1State : gameRequestGameStop.Play2State;
+                    Statistics[playState] = Statistics.ContainsKey(playState) ? Statistics[playState] + 1 : 1;
+
+                    if (ClientState == ClientState.InGame)
+                    {
+                        ClientState = ClientState.Registred;
+                    }
+
+
+                    if (_isBot)
+                    {
+                        ResponseGameStop(PlayerId, RequestState.Success);
+                    }
                     break;
 
                 default:
@@ -369,7 +394,14 @@ namespace SabberStoneClient.Client
         {
             _gameClient.Connection.Send(DataPacketBuilder.ResponseClientGamePowerOption(_id, _token, _gameId, powerOption, target, position, subOption));
         }
+        public void ResponseGameStop(int playerId, RequestState requestState)
+        {
+            _gameClient.Connection.Send(DataPacketBuilder.ResponseClientGameStop(_id, _token, _gameId, playerId, requestState));
 
+            // reseting ids ...
+            _gameId = -1;
+            PlayerId = -1;
+        }
         #endregion
 
         private void Log(string logLevel, string s)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -33,6 +34,15 @@ namespace SabberStoneServer.Server
 
         private void MatchMakerService()
         {
+            var finishedMatches = _matchGames.Values.Where(matchGamesValue => matchGamesValue.IsFinished).ToList();
+            finishedMatches.ForEach(p =>
+            {
+                if (_matchGames.TryRemove(p.GameId, out var finishedMatch))
+                {
+                    Log.Info($"[GameId:{finishedMatch.GameId}] finished, [{finishedMatch.Player1.AccountName}:{finishedMatch.Play1State}] vs [{finishedMatch.Player2.AccountName}:{finishedMatch.Play2State}].");
+                }
+            });
+
             var queuedUsers = _gameServer.RegistredUsers.ToList().Where(user => user.UserState == UserState.Queued).ToList();
             Log.Info($"{queuedUsers.Count} users queued for matchmaking.");
 

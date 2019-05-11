@@ -11,13 +11,15 @@ namespace SabberStoneCommon.Contract
         Preparation,
         GameStart,
         PowerHistory,
-        PowerAllOptions
+        PowerAllOptions,
+        GameStop
     }
     public enum GameResponseType
     {
         Invitation,
         Preparation,
-        PowerOption
+        PowerOption,
+        GameStop
     }
     public class GameRequest
     {
@@ -64,6 +66,15 @@ namespace SabberStoneCommon.Contract
         public virtual int Target { get; set; }
         public virtual int Position { get; set; }
         public virtual int SubOption { get; set; }
+    }
+    public class GameRequestGameStop
+    {
+        public PlayState Play1State { get; set; }
+        public PlayState Play2State { get; set; }
+    }
+    public class GameResponseGameStop
+    {
+        public virtual int PlayerId { get; set; }
     }
     public enum DeckType
     {
