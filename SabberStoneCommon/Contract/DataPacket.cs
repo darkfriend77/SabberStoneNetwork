@@ -166,7 +166,6 @@ namespace SabberStoneCommon.Contract
                     })
             });
         }
-
         public static string RequestServerGamePreparation(int id, string token, int gameId)
         {
             return JsonConvert.SerializeObject(new DataPacket()
@@ -193,7 +192,6 @@ namespace SabberStoneCommon.Contract
                     })
             });
         }
-
         public static string RequestServerGameStart(int id, string token, int gameId, UserInfo player1, UserInfo player2)
         {
             return JsonConvert.SerializeObject(new DataPacket
@@ -224,7 +222,6 @@ namespace SabberStoneCommon.Contract
                     })
             });
         }
-
         public static string RequestServerGamePowerHistory(int id, string token, int gameId, int playerId, IPowerHistoryEntry powerHistoryLast)
         {
             return JsonConvert.SerializeObject(new DataPacket
@@ -256,7 +253,6 @@ namespace SabberStoneCommon.Contract
                     })
             });
         }
-
         public static string RequestServerGamePowerOptions(int id, string token, int gameId, int playerId, int index, List<PowerOption> powerOptionList)
         {
             return JsonConvert.SerializeObject(new DataPacket()
@@ -317,7 +313,6 @@ namespace SabberStoneCommon.Contract
                     })
             });
         }
-
         public static string ResponseClientGamePreparation(int id, string token, int gameId, DeckType deckType, string deckData, RequestState requestState)
         {
             return JsonConvert.SerializeObject(new DataPacket()
