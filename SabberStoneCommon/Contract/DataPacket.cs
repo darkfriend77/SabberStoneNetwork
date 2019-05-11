@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using ProtoBuf;
@@ -13,7 +14,7 @@ namespace SabberStoneCommon.Contract
         {
             var mem = new MemoryStream();
             Serializer.Serialize(mem, data);
-            return mem.GetBuffer();
+            return mem.ToArray();
         }
 
         public static SabberDataPacket Deserialize(byte[] buffer)
@@ -334,8 +335,6 @@ namespace SabberStoneCommon.Contract
         #endregion
 
     }
-
-
 
     [ProtoContract]
     public class SabberDataPacket
