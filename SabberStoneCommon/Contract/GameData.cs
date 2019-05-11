@@ -5,19 +5,6 @@ using SabberStoneCore.Kettle;
 
 namespace SabberStoneCommon.Contract
 {
-    public enum GameMessageType
-    {
-        GameRequest,
-        GameResponse
-    }
-
-    public class GameData
-    {
-        public virtual int GameId { get; set; }
-        public virtual GameMessageType GameMessageType { get; set; }
-        public virtual string GameMessageData { get; set; }
-    }
-
     public enum GameRequestType
     {
         Invitation,

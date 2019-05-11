@@ -71,17 +71,17 @@ namespace SabberStoneServer.Server
             _timer.Change(Timeout.Infinite, Timeout.Infinite);
         }
 
-        public void ProcessData(ITcpConnection cNetConnection, int dataPacketId, string dataPacketToken, GameData gameData)
+        public void ProcessData(ITcpConnection cNetConnection, int dataPacketId, string dataPacketToken, int gameId, GameResponse gameResponse)
         {
-            if (!_matchGames.TryGetValue(gameData.GameId, out MatchGame matchGame))
+            if (!_matchGames.TryGetValue(gameId, out var matchGame))
             {
-                Log.Warn($"Couldn't find match game with [GameId:{gameData.GameId}]. Not processing game data.");
+                Log.Warn($"Couldn't find match game with [GameId:{gameId}]. Not processing game data.");
                 return;
             }
 
             // processing game data
-            Log.Info($"Processing game data for [GameId:{gameData.GameId}].");
-            matchGame.ProcessData(cNetConnection, dataPacketId, dataPacketToken, gameData);
+            Log.Info($"Processing game data for [GameId:{gameId}].");
+            matchGame.ProcessGameResponse(dataPacketId, dataPacketToken, gameResponse);
         }
     }
 }

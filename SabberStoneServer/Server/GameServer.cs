@@ -98,10 +98,11 @@ namespace SabberStoneServer
                     c.NetConnection.Send(ResponseQueue(c.NetConnection, sendData.Id, sendData.Token, sendData));
                     break;
 
-                case MessageType.Game:
-                    _matchMaker.ProcessData(c.NetConnection, sendData.Id, sendData.Token, JsonConvert.DeserializeObject<GameData>(sendData.MessageData));
+                case MessageType.GameResponse:
+                    _matchMaker.ProcessData(c.NetConnection, sendData.Id, sendData.Token, sendData.GameId, JsonConvert.DeserializeObject<GameResponse>(sendData.MessageData));
                     break;
 
+                case MessageType.GameRequest:
                 case MessageType.Response:
                 case MessageType.None:
                 default:

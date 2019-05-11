@@ -143,23 +143,7 @@ namespace SabberStoneServer.Server
             Log.Warn($"[_gameId:{_gameId}] should be stopped here, isn't implemented!!!");
         }
 
-        public void ProcessData(ITcpConnection cNetConnection, int dataPacketId, string dataPacketToken, GameData gameData)
-        {
-            switch (gameData.GameMessageType)
-            {
-                case GameMessageType.GameResponse:
-                    ProcessGameResponse(dataPacketId, dataPacketToken, JsonConvert.DeserializeObject<GameResponse>(gameData.GameMessageData));
-                    break;
-
-                case GameMessageType.GameRequest:
-                    break;
-
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        private void ProcessGameResponse(int dataPacketId, string dataPacketToken, GameResponse gameResponse)
+        public void ProcessGameResponse(int dataPacketId, string dataPacketToken, GameResponse gameResponse)
         {
             var userInfoData = UserById(dataPacketId);
             Log.Info($"GameResponse:{gameResponse.GameResponseType} from {userInfoData?.AccountName}, {gameResponse.RequestState}");

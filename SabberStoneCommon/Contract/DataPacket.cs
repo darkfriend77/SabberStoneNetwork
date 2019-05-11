@@ -29,6 +29,7 @@ namespace SabberStoneCommon.Contract
             {
                 Id = id,
                 Token = token,
+                GameId = -1,
                 MessageType = MessageType.HandShake,
                 MessageData = JsonConvert.SerializeObject(
                     new HandShakeRequest
@@ -43,6 +44,7 @@ namespace SabberStoneCommon.Contract
             {
                 Id = id,
                 Token = token,
+                GameId = -1,
                 MessageType = MessageType.Stats,
                 MessageData = JsonConvert.SerializeObject(
                             new StatsRequest())
@@ -54,6 +56,7 @@ namespace SabberStoneCommon.Contract
             {
                 Id = id,
                 Token = token,
+                GameId = -1,
                 MessageType = MessageType.Queue,
                 MessageData = JsonConvert.SerializeObject(
                     new QueueRequest
@@ -71,6 +74,7 @@ namespace SabberStoneCommon.Contract
             {
                 Id = id,
                 Token = token,
+                GameId = -1,
                 MessageType = MessageType.Response,
                 MessageData = JsonConvert.SerializeObject(
                     new Response
@@ -93,6 +97,7 @@ namespace SabberStoneCommon.Contract
             {
                 Id = id,
                 Token = token,
+                GameId = -1,
                 MessageType = MessageType.Response,
                 MessageData = JsonConvert.SerializeObject(
                     new Response
@@ -113,6 +118,7 @@ namespace SabberStoneCommon.Contract
             {
                 Id = id,
                 Token = token,
+                GameId = -1,
                 MessageType = MessageType.Response,
                 MessageData = JsonConvert.SerializeObject(
                     new Response()
@@ -132,24 +138,20 @@ namespace SabberStoneCommon.Contract
             {
                 Id = id,
                 Token = token,
-                MessageType = MessageType.Game,
+                GameId = gameId,
+                MessageType = MessageType.GameRequest,
                 MessageData = JsonConvert.SerializeObject(
-                    new GameData
+                    new GameRequest
                     {
-                        GameId = gameId,
-                        GameMessageType = GameMessageType.GameRequest,
-                        GameMessageData = JsonConvert.SerializeObject(
-                            new GameRequest
+                        GameRequestType = GameRequestType.Invitation,
+                        GameRequestData = JsonConvert.SerializeObject(
+                            new GameRequestInvitation
                             {
-                                GameRequestType = GameRequestType.Invitation,
-                                GameRequestData = JsonConvert.SerializeObject(
-                                    new GameRequestInvitation
-                                    {
-                                        GameId = gameId,
-                                        PlayerId = playerId
-                                    })
+                                GameId = gameId,
+                                PlayerId = playerId
                             })
                     })
+
             });
         }
         public static byte[] RequestServerGamePreparation(int id, string token, int gameId)
@@ -158,19 +160,14 @@ namespace SabberStoneCommon.Contract
             {
                 Id = id,
                 Token = token,
-                MessageType = MessageType.Game,
+                GameId = gameId,
+                MessageType = MessageType.GameRequest,
                 MessageData = JsonConvert.SerializeObject(
-                    new GameData
+                    new GameRequest
                     {
-                        GameId = gameId,
-                        GameMessageType = GameMessageType.GameRequest,
-                        GameMessageData = JsonConvert.SerializeObject(
-                            new GameRequest
-                            {
-                                GameRequestType = GameRequestType.Preparation,
-                                GameRequestData = JsonConvert.SerializeObject(
-                                    new GameRequestPreparation { })
-                            })
+                        GameRequestType = GameRequestType.Preparation,
+                        GameRequestData = JsonConvert.SerializeObject(
+                            new GameRequestPreparation { })
                     })
             });
         }
@@ -180,21 +177,17 @@ namespace SabberStoneCommon.Contract
             {
                 Id = id,
                 Token = token,
-                MessageType = MessageType.Game,
+                GameId = gameId,
+                MessageType = MessageType.GameRequest,
                 MessageData = JsonConvert.SerializeObject(
-                    new GameData {
-                        GameId = gameId,
-                        GameMessageType = GameMessageType.GameRequest,
-                        GameMessageData = JsonConvert.SerializeObject(
-                            new GameRequest
+                    new GameRequest
+                    {
+                        GameRequestType = GameRequestType.GameStart,
+                        GameRequestData = JsonConvert.SerializeObject(
+                            new GameRequestGameStart
                             {
-                                GameRequestType = GameRequestType.GameStart,
-                                GameRequestData = JsonConvert.SerializeObject(
-                                    new GameRequestGameStart
-                                    {
-                                        Player1 = new UserInfo { Id = player1.Id, AccountName = player1.AccountName },
-                                        Player2 = new UserInfo { Id = player2.Id, AccountName = player2.AccountName }
-                                    })
+                                Player1 = new UserInfo { Id = player1.Id, AccountName = player1.AccountName },
+                                Player2 = new UserInfo { Id = player2.Id, AccountName = player2.AccountName }
                             })
                     })
             });
@@ -205,23 +198,18 @@ namespace SabberStoneCommon.Contract
             {
                 Id = id,
                 Token = token,
-                MessageType = MessageType.Game,
+                GameId = gameId,
+                MessageType = MessageType.GameRequest,
                 MessageData = JsonConvert.SerializeObject(
-                    new GameData
+                    new GameRequest
                     {
-                        GameId = gameId,
-                        GameMessageType = GameMessageType.GameRequest,
-                        GameMessageData = JsonConvert.SerializeObject(
-                            new GameRequest
+                        GameRequestType = GameRequestType.PowerHistory,
+                        GameRequestData = JsonConvert.SerializeObject(
+                            new GameRequestPowerHistory
                             {
-                                GameRequestType = GameRequestType.PowerHistory,
-                                GameRequestData = JsonConvert.SerializeObject(
-                                    new GameRequestPowerHistory
-                                    {
-                                        PlayerId = playerId,
-                                        PowerType = powerHistoryLast.PowerType,
-                                        PowerHistory = PowerJsonHelper.Serialize(powerHistoryLast)
-                                    })
+                                PlayerId = playerId,
+                                PowerType = powerHistoryLast.PowerType,
+                                PowerHistory = PowerJsonHelper.Serialize(powerHistoryLast)
                             })
                     })
             });
@@ -232,23 +220,18 @@ namespace SabberStoneCommon.Contract
             {
                 Id = id,
                 Token = token,
-                MessageType = MessageType.Game,
+                GameId = gameId,
+                MessageType = MessageType.GameRequest,
                 MessageData = JsonConvert.SerializeObject(
-                    new GameData
+                    new GameRequest
                     {
-                        GameId = gameId,
-                        GameMessageType = GameMessageType.GameRequest,
-                        GameMessageData = JsonConvert.SerializeObject(
-                            new GameRequest
+                        GameRequestType = GameRequestType.PowerAllOptions,
+                        GameRequestData = JsonConvert.SerializeObject(
+                            new GameRequestPowerAllOptions
                             {
-                                GameRequestType = GameRequestType.PowerAllOptions,
-                                GameRequestData = JsonConvert.SerializeObject(
-                                    new GameRequestPowerAllOptions
-                                    {
-                                        PlayerId = playerId,
-                                        PowerOptionIndex = index,
-                                        PowerOptionList = powerOptionList
-                                    })
+                                PlayerId = playerId,
+                                PowerOptionIndex = index,
+                                PowerOptionList = powerOptionList
                             })
                     })
             });
@@ -262,20 +245,15 @@ namespace SabberStoneCommon.Contract
             {
                 Id = id,
                 Token = token,
-                MessageType = MessageType.Game,
+                GameId = gameId,
+                MessageType = MessageType.GameResponse,
                 MessageData = JsonConvert.SerializeObject(
-                    new GameData
+                    new GameResponse
                     {
-                        GameId = gameId,
-                        GameMessageType = GameMessageType.GameResponse,
-                        GameMessageData = JsonConvert.SerializeObject(
-                        new GameResponse
-                        {
-                            RequestState = requestState,
-                            GameResponseType = GameResponseType.Invitation,
-                            GameResponseData = JsonConvert.SerializeObject(
-                                new GameResponseInvitation())
-                        })
+                        RequestState = requestState,
+                        GameResponseType = GameResponseType.Invitation,
+                        GameResponseData = JsonConvert.SerializeObject(
+                            new GameResponseInvitation())
                     })
             });
         }
@@ -285,25 +263,20 @@ namespace SabberStoneCommon.Contract
             {
                 Id = id,
                 Token = token,
-                MessageType = MessageType.Game,
+                GameId = gameId,
+                MessageType = MessageType.GameResponse,
                 MessageData = JsonConvert.SerializeObject(
-                new GameData
-                {
-                    GameId = gameId,
-                    GameMessageType = GameMessageType.GameResponse,
-                    GameMessageData = JsonConvert.SerializeObject(
                     new GameResponse
                     {
                         RequestState = requestState,
                         GameResponseType = GameResponseType.Preparation,
                         GameResponseData = JsonConvert.SerializeObject(
-                        new GameResponsePreparation
-                        {
-                            DeckType = deckType,
-                            DeckData = deckData
-                        })
+                            new GameResponsePreparation
+                            {
+                                DeckType = deckType,
+                                DeckData = deckData
+                            })
                     })
-                })
             });
         }
         public static byte[] ResponseClientGamePowerOption(int id, string token, int gameId, PowerOption powerOption)
@@ -312,22 +285,17 @@ namespace SabberStoneCommon.Contract
             {
                 Id = id,
                 Token = token,
-                MessageType = MessageType.Game,
+                GameId = gameId,
+                MessageType = MessageType.GameResponse,
                 MessageData = JsonConvert.SerializeObject(
-                    new GameData
+                    new GameResponse
                     {
-                        GameId = gameId,
-                        GameMessageType = GameMessageType.GameResponse,
-                        GameMessageData = JsonConvert.SerializeObject(
-                            new GameResponse
+                        RequestState = RequestState.Success,
+                        GameResponseType = GameResponseType.Preparation,
+                        GameResponseData = JsonConvert.SerializeObject(
+                            new GameResponsePowerOption
                             {
-                                RequestState = RequestState.Success,
-                                GameResponseType = GameResponseType.Preparation,
-                                GameResponseData = JsonConvert.SerializeObject(
-                                    new GameResponsePowerOption
-                                    {
-                                        PowerOption = powerOption
-                                    })
+                                PowerOption = powerOption
                             })
                     })
             });
@@ -342,10 +310,14 @@ namespace SabberStoneCommon.Contract
         [ProtoMember(1)]
         public virtual int Id { get; set; }
         [ProtoMember(2)]
-        public virtual string Token { get; set; }
+        public virtual int GameId { get; set; }
         [ProtoMember(3)]
-        public virtual MessageType MessageType { get; set; }
+        public virtual int PlayerId { get; set; }
         [ProtoMember(4)]
+        public virtual string Token { get; set; }
+        [ProtoMember(5)]
+        public virtual MessageType MessageType { get; set; }
+        [ProtoMember(6)]
         public virtual string MessageData { get; set; }
     }
 
@@ -356,7 +328,8 @@ namespace SabberStoneCommon.Contract
         Stats,
         Queue,
         Response,
-        Game
+        GameRequest,
+        GameResponse
     }
 
     public class HandShakeRequest

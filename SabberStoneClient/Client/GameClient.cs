@@ -149,20 +149,12 @@ namespace SabberStoneClient.Client
                     ProcessResponse(response);
                     break;
 
-                case MessageType.Game:
-                    var gameData = JsonConvert.DeserializeObject<GameData>(sDataPacket.MessageData);
-                    if (gameData.GameMessageType == GameMessageType.GameRequest)
-                    {
-                        var gameRequest = JsonConvert.DeserializeObject<GameRequest>(gameData.GameMessageData);
-                        //Log("INFO", $"GameMessage[{gameData.GameMessageType}]: {gameRequest.GameRequestType}");
-                        ProcessGameRequest(gameRequest);
-                    }
-                    else
-                    {
-                        Log("WARN", $"GameMessage[{gameData.GameMessageType}]: Not implemented!");
-                    }
+                case MessageType.GameRequest:
+                    var gameRequest = JsonConvert.DeserializeObject<GameRequest>(sDataPacket.MessageData);
+                    ProcessGameRequest(gameRequest);
                     break;
 
+                case MessageType.GameResponse:
                 default:
                     Log("WARN", $"[Id:{sDataPacket.Id}][Token:{sDataPacket.Token}][{sDataPacket.MessageType}] Not implemented! (Sent:{c.RemoteEndPoint})");
                     break;
