@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using Newtonsoft.Json;
+using ProtoBuf;
 using SabberStoneCommon.PowerObjects;
 using SabberStoneCore.Kettle;
 
@@ -7,99 +9,91 @@ namespace SabberStoneCommon.Contract
 {
     public class DataPacketBuilder
     {
+        public static byte[] Serialize(SabberDataPacket data)
+        {
+            var mem = new MemoryStream();
+            Serializer.Serialize(mem, data);
+            return mem.GetBuffer();
+        }
+
+        public static SabberDataPacket Deserialize(byte[] buffer)
+        {
+            return Serializer.Deserialize<SabberDataPacket>(new MemoryStream(buffer));
+        }
+
         #region CLIENT_REQUESTS
-        public static string RequestClientHandShake(int id, string token, string accountName)
+        public static byte[] RequestClientHandShake(int id, string token, string accountName)
         {
-            return JsonConvert.SerializeObject(new DataPacket
+            return Serialize(new SabberDataPacket()
             {
                 Id = id,
                 Token = token,
-                SendData = JsonConvert.SerializeObject(
-                    new SendData
+                MessageType = MessageType.HandShake,
+                MessageData = JsonConvert.SerializeObject(
+                    new HandShakeRequest
                     {
-                        MessageType = MessageType.HandShake,
-                        MessageData = JsonConvert.SerializeObject(
-                            new HandShakeRequest
-                            {
-                                AccountName = accountName
-                            })
+                        AccountName = accountName
                     })
             });
         }
-        public static string RequestClientStats(int id, string token)
+        public static byte[] RequestClientStats(int id, string token)
         {
-            return JsonConvert.SerializeObject(new DataPacket()
+            return Serialize(new SabberDataPacket()
             {
                 Id = id,
                 Token = token,
-                SendData = JsonConvert.SerializeObject(
-                    new SendData
-                    {
-                        MessageType = MessageType.Stats,
-                        MessageData = JsonConvert.SerializeObject(
+                MessageType = MessageType.Stats,
+                MessageData = JsonConvert.SerializeObject(
                             new StatsRequest())
-                    })
             });
         }
-        public static string RequestClientQueue(int id, string token, GameType gameType)
+        public static byte[] RequestClientQueue(int id, string token, GameType gameType)
         {
-            return JsonConvert.SerializeObject(new DataPacket()
+            return Serialize(new SabberDataPacket()
             {
                 Id = id,
                 Token = token,
-                SendData = JsonConvert.SerializeObject(
-                    new SendData
+                MessageType = MessageType.Queue,
+                MessageData = JsonConvert.SerializeObject(
+                    new QueueRequest
                     {
-                        MessageType = MessageType.Queue,
-                        MessageData = JsonConvert.SerializeObject(
-                            new QueueRequest
-                            {
-                                GameType = gameType
-                            })
+                        GameType = gameType
                     })
             });
         }
         #endregion
 
         #region SERVER_RESPONSES
-        public static string ResponseServerHandShake(int id, string token, RequestState requestState, int userIndex, string userToken)
+        public static byte[] ResponseServerHandShake(int id, string token, RequestState requestState, int userIndex, string userToken)
         {
-            return JsonConvert.SerializeObject(new DataPacket()
+            return Serialize(new SabberDataPacket()
             {
                 Id = id,
                 Token = token,
-                SendData = JsonConvert.SerializeObject(
-                    new SendData
+                MessageType = MessageType.Response,
+                MessageData = JsonConvert.SerializeObject(
+                    new Response
                     {
-                        MessageType = MessageType.Response,
-                        MessageData = JsonConvert.SerializeObject(
-                            new Response
-                            {
-                                RequestState = requestState,
-                                ResponseType = ResponseType.HandShake,
-                                ResponseData = requestState == RequestState.Success ?
-                                    JsonConvert.SerializeObject(
-                                        new HandShakeResponse
-                                        {
-                                            Id = userIndex,
-                                            Token = userToken
-                                        }) :
-                                    ""
-                            })
+                        RequestState = requestState,
+                        ResponseType = ResponseType.HandShake,
+                        ResponseData = requestState == RequestState.Success ?
+                            JsonConvert.SerializeObject(
+                                new HandShakeResponse
+                                {
+                                    Id = userIndex,
+                                    Token = userToken
+                                }) : ""
                     })
             });
         }
-        public static string ResponseServerQueue(int id, string token, RequestState requestState, int queueSize)
+        public static byte[] ResponseServerQueue(int id, string token, RequestState requestState, int queueSize)
         {
-            return JsonConvert.SerializeObject(new DataPacket()
+            return Serialize(new SabberDataPacket()
             {
                 Id = id,
                 Token = token,
-                SendData = JsonConvert.SerializeObject(
-                    new SendData
-                    {
-                        MessageType = MessageType.Response,
-                        MessageData = JsonConvert.SerializeObject(
+                MessageType = MessageType.Response,
+                MessageData = JsonConvert.SerializeObject(
                     new Response
                     {
                         RequestState = requestState,
@@ -110,175 +104,149 @@ namespace SabberStoneCommon.Contract
                                 QueueSize = queueSize
                             })
                     })
-                    })
             });
         }
-        public static string ResponseServerStats(int id, string token, RequestState requestState, List<UserInfo> userInfos)
+        public static byte[] ResponseServerStats(int id, string token, RequestState requestState, List<UserInfo> userInfos)
         {
-            return JsonConvert.SerializeObject(new DataPacket()
+            return Serialize(new SabberDataPacket()
             {
                 Id = id,
                 Token = token,
-                SendData = JsonConvert.SerializeObject(
-                    new SendData
+                MessageType = MessageType.Response,
+                MessageData = JsonConvert.SerializeObject(
+                    new Response()
                     {
-                        MessageType = MessageType.Response,
-                        MessageData = JsonConvert.SerializeObject(
-                            new Response()
-                            {
-                                RequestState = requestState,
-                                ResponseType = ResponseType.Stats,
-                                ResponseData = JsonConvert.SerializeObject(new StatsResponse { UserInfos = userInfos })
-                            })
+                        RequestState = requestState,
+                        ResponseType = ResponseType.Stats,
+                        ResponseData = JsonConvert.SerializeObject(new StatsResponse { UserInfos = userInfos })
                     })
             });
         }
         #endregion
 
         #region SERVER_REQUESTS
-        public static string RequestServerGameInvitation(int id, string token, int gameId, int playerId)
+        public static byte[] RequestServerGameInvitation(int id, string token, int gameId, int playerId)
         {
-            return JsonConvert.SerializeObject(new DataPacket()
+            return Serialize(new SabberDataPacket()
             {
                 Id = id,
                 Token = token,
-                SendData = JsonConvert.SerializeObject(
-                    new SendData
+                MessageType = MessageType.Game,
+                MessageData = JsonConvert.SerializeObject(
+                    new GameData
                     {
-                        MessageType = MessageType.Game,
-                        MessageData = JsonConvert.SerializeObject(
-                            new GameData
+                        GameId = gameId,
+                        GameMessageType = GameMessageType.GameRequest,
+                        GameMessageData = JsonConvert.SerializeObject(
+                            new GameRequest
                             {
-                                GameId = gameId,
-                                GameMessageType = GameMessageType.GameRequest,
-                                GameMessageData = JsonConvert.SerializeObject(
-                                    new GameRequest
+                                GameRequestType = GameRequestType.Invitation,
+                                GameRequestData = JsonConvert.SerializeObject(
+                                    new GameRequestInvitation
                                     {
-                                        GameRequestType = GameRequestType.Invitation,
-                                        GameRequestData = JsonConvert.SerializeObject(
-                                            new GameRequestInvitation
-                                            {
-                                                GameId = gameId,
-                                                PlayerId = playerId
-                                            })
+                                        GameId = gameId,
+                                        PlayerId = playerId
                                     })
                             })
                     })
             });
         }
-        public static string RequestServerGamePreparation(int id, string token, int gameId)
+        public static byte[] RequestServerGamePreparation(int id, string token, int gameId)
         {
-            return JsonConvert.SerializeObject(new DataPacket()
+            return Serialize(new SabberDataPacket()
             {
                 Id = id,
                 Token = token,
-                SendData = JsonConvert.SerializeObject(
-                    new SendData
+                MessageType = MessageType.Game,
+                MessageData = JsonConvert.SerializeObject(
+                    new GameData
                     {
-                        MessageType = MessageType.Game,
-                        MessageData = JsonConvert.SerializeObject(
-                            new GameData
+                        GameId = gameId,
+                        GameMessageType = GameMessageType.GameRequest,
+                        GameMessageData = JsonConvert.SerializeObject(
+                            new GameRequest
                             {
-                                GameId = gameId,
-                                GameMessageType = GameMessageType.GameRequest,
-                                GameMessageData = JsonConvert.SerializeObject(
-                                    new GameRequest
+                                GameRequestType = GameRequestType.Preparation,
+                                GameRequestData = JsonConvert.SerializeObject(
+                                    new GameRequestPreparation { })
+                            })
+                    })
+            });
+        }
+        public static byte[] RequestServerGameStart(int id, string token, int gameId, UserInfo player1, UserInfo player2)
+        {
+            return Serialize(new SabberDataPacket()
+            {
+                Id = id,
+                Token = token,
+                MessageType = MessageType.Game,
+                MessageData = JsonConvert.SerializeObject(
+                    new GameData {
+                        GameId = gameId,
+                        GameMessageType = GameMessageType.GameRequest,
+                        GameMessageData = JsonConvert.SerializeObject(
+                            new GameRequest
+                            {
+                                GameRequestType = GameRequestType.GameStart,
+                                GameRequestData = JsonConvert.SerializeObject(
+                                    new GameRequestGameStart
                                     {
-                                        GameRequestType = GameRequestType.Preparation,
-                                        GameRequestData = JsonConvert.SerializeObject(
-                                            new GameRequestPreparation {})
+                                        Player1 = new UserInfo { Id = player1.Id, AccountName = player1.AccountName },
+                                        Player2 = new UserInfo { Id = player2.Id, AccountName = player2.AccountName }
                                     })
                             })
                     })
             });
         }
-        public static string RequestServerGameStart(int id, string token, int gameId, UserInfo player1, UserInfo player2)
+        public static byte[] RequestServerGamePowerHistory(int id, string token, int gameId, int playerId, IPowerHistoryEntry powerHistoryLast)
         {
-            return JsonConvert.SerializeObject(new DataPacket
+            return Serialize(new SabberDataPacket()
             {
                 Id = id,
                 Token = token,
-                SendData = JsonConvert.SerializeObject(
-                    new SendData
+                MessageType = MessageType.Game,
+                MessageData = JsonConvert.SerializeObject(
+                    new GameData
                     {
-                        MessageType = MessageType.Game,
-                        MessageData = JsonConvert.SerializeObject(
-                            new GameData
+                        GameId = gameId,
+                        GameMessageType = GameMessageType.GameRequest,
+                        GameMessageData = JsonConvert.SerializeObject(
+                            new GameRequest
                             {
-                                GameId = gameId,
-                                GameMessageType = GameMessageType.GameRequest,
-                                GameMessageData = JsonConvert.SerializeObject(
-                                    new GameRequest
+                                GameRequestType = GameRequestType.PowerHistory,
+                                GameRequestData = JsonConvert.SerializeObject(
+                                    new GameRequestPowerHistory
                                     {
-                                        GameRequestType = GameRequestType.GameStart,
-                                        GameRequestData = JsonConvert.SerializeObject(
-                                            new GameRequestGameStart
-                                            {
-                                                Player1 = new UserInfo { Id = player1.Id, AccountName = player1.AccountName},
-                                                Player2 = new UserInfo { Id = player2.Id, AccountName = player2.AccountName}
-                                            })
+                                        PlayerId = playerId,
+                                        PowerType = powerHistoryLast.PowerType,
+                                        PowerHistory = PowerJsonHelper.Serialize(powerHistoryLast)
                                     })
                             })
                     })
             });
         }
-        public static string RequestServerGamePowerHistory(int id, string token, int gameId, int playerId, IPowerHistoryEntry powerHistoryLast)
+        public static byte[] RequestServerGamePowerOptions(int id, string token, int gameId, int playerId, int index, List<PowerOption> powerOptionList)
         {
-            return JsonConvert.SerializeObject(new DataPacket
+            return Serialize(new SabberDataPacket()
             {
                 Id = id,
                 Token = token,
-                SendData = JsonConvert.SerializeObject(
-                    new SendData
+                MessageType = MessageType.Game,
+                MessageData = JsonConvert.SerializeObject(
+                    new GameData
                     {
-                        MessageType = MessageType.Game,
-                        MessageData = JsonConvert.SerializeObject(
-                            new GameData
+                        GameId = gameId,
+                        GameMessageType = GameMessageType.GameRequest,
+                        GameMessageData = JsonConvert.SerializeObject(
+                            new GameRequest
                             {
-                                GameId = gameId,
-                                GameMessageType = GameMessageType.GameRequest,
-                                GameMessageData = JsonConvert.SerializeObject(
-                                    new GameRequest
+                                GameRequestType = GameRequestType.PowerAllOptions,
+                                GameRequestData = JsonConvert.SerializeObject(
+                                    new GameRequestPowerAllOptions
                                     {
-                                        GameRequestType = GameRequestType.PowerHistory,
-                                        GameRequestData = JsonConvert.SerializeObject(
-                                            new GameRequestPowerHistory
-                                            {
-                                                PlayerId = playerId,
-                                                PowerType = powerHistoryLast.PowerType,
-                                                PowerHistory = PowerJsonHelper.Serialize(powerHistoryLast)
-                                            })
-                                    })
-                            })
-                    })
-            });
-        }
-        public static string RequestServerGamePowerOptions(int id, string token, int gameId, int playerId, int index, List<PowerOption> powerOptionList)
-        {
-            return JsonConvert.SerializeObject(new DataPacket()
-            {
-                Id = id,
-                Token = token,
-                SendData = JsonConvert.SerializeObject(
-                    new SendData
-                    {
-                        MessageType = MessageType.Game,
-                        MessageData = JsonConvert.SerializeObject(
-                            new GameData
-                            {
-                                GameId = gameId,
-                                GameMessageType = GameMessageType.GameRequest,
-                                GameMessageData = JsonConvert.SerializeObject(
-                                    new GameRequest
-                                    {
-                                        GameRequestType = GameRequestType.PowerAllOptions,
-                                        GameRequestData = JsonConvert.SerializeObject(
-                                            new GameRequestPowerAllOptions
-                                            {
-                                                PlayerId = playerId,
-                                                PowerOptionIndex = index,
-                                                PowerOptionList = powerOptionList
-                                            })
+                                        PlayerId = playerId,
+                                        PowerOptionIndex = index,
+                                        PowerOptionList = powerOptionList
                                     })
                             })
                     })
@@ -287,88 +255,77 @@ namespace SabberStoneCommon.Contract
         #endregion
 
         #region CLIENT_RESPONSES
-        public static string ResponseClientGameInvitation(int id, string token, int gameId, RequestState requestState)
+        public static byte[] ResponseClientGameInvitation(int id, string token, int gameId, RequestState requestState)
         {
-            return JsonConvert.SerializeObject(new DataPacket()
+            return Serialize(new SabberDataPacket()
             {
                 Id = id,
                 Token = token,
-                SendData = JsonConvert.SerializeObject(
-                    new SendData
+                MessageType = MessageType.Game,
+                MessageData = JsonConvert.SerializeObject(
+                    new GameData
                     {
-                        MessageType = MessageType.Game,
-                        MessageData = JsonConvert.SerializeObject(
-                            new GameData
-                            {
-                                GameId = gameId,
-                                GameMessageType = GameMessageType.GameResponse,
-                                GameMessageData = JsonConvert.SerializeObject(
-                                    new GameResponse
-                                    {
-                                        RequestState = requestState,
-                                        GameResponseType = GameResponseType.Invitation,
-                                        GameResponseData = JsonConvert.SerializeObject(new GameResponseInvitation())
-                                    })
-                            })
+                        GameId = gameId,
+                        GameMessageType = GameMessageType.GameResponse,
+                        GameMessageData = JsonConvert.SerializeObject(
+                        new GameResponse
+                        {
+                            RequestState = requestState,
+                            GameResponseType = GameResponseType.Invitation,
+                            GameResponseData = JsonConvert.SerializeObject(
+                                new GameResponseInvitation())
+                        })
                     })
             });
         }
-        public static string ResponseClientGamePreparation(int id, string token, int gameId, DeckType deckType, string deckData, RequestState requestState)
+        public static byte[] ResponseClientGamePreparation(int id, string token, int gameId, DeckType deckType, string deckData, RequestState requestState)
         {
-            return JsonConvert.SerializeObject(new DataPacket()
+            return Serialize(new SabberDataPacket()
             {
                 Id = id,
                 Token = token,
-                SendData = JsonConvert.SerializeObject(
-                    new SendData
+                MessageType = MessageType.Game,
+                MessageData = JsonConvert.SerializeObject(
+                new GameData
+                {
+                    GameId = gameId,
+                    GameMessageType = GameMessageType.GameResponse,
+                    GameMessageData = JsonConvert.SerializeObject(
+                    new GameResponse
                     {
-                        MessageType = MessageType.Game,
-                        MessageData = JsonConvert.SerializeObject(
-                            new GameData
-                            {
-                                GameId = gameId,
-                                GameMessageType = GameMessageType.GameResponse,
-                                GameMessageData = JsonConvert.SerializeObject(
-                                    new GameResponse
-                                    {
-                                        RequestState = requestState,
-                                        GameResponseType = GameResponseType.Preparation,
-                                        GameResponseData = JsonConvert.SerializeObject(
-                                            new GameResponsePreparation
-                                            {
-                                                DeckType = deckType,
-                                                DeckData = deckData
-                                            })
-                                    })
-                            })
+                        RequestState = requestState,
+                        GameResponseType = GameResponseType.Preparation,
+                        GameResponseData = JsonConvert.SerializeObject(
+                        new GameResponsePreparation
+                        {
+                            DeckType = deckType,
+                            DeckData = deckData
+                        })
                     })
+                })
             });
         }
-        public static string ResponseClientGamePowerOption(int id, string token, int gameId, PowerOption powerOption)
+        public static byte[] ResponseClientGamePowerOption(int id, string token, int gameId, PowerOption powerOption)
         {
-            return JsonConvert.SerializeObject(new DataPacket()
+            return Serialize(new SabberDataPacket()
             {
                 Id = id,
                 Token = token,
-                SendData = JsonConvert.SerializeObject(
-                    new SendData
+                MessageType = MessageType.Game,
+                MessageData = JsonConvert.SerializeObject(
+                    new GameData
                     {
-                        MessageType = MessageType.Game,
-                        MessageData = JsonConvert.SerializeObject(
-                            new GameData
+                        GameId = gameId,
+                        GameMessageType = GameMessageType.GameResponse,
+                        GameMessageData = JsonConvert.SerializeObject(
+                            new GameResponse
                             {
-                                GameId = gameId,
-                                GameMessageType = GameMessageType.GameResponse,
-                                GameMessageData = JsonConvert.SerializeObject(
-                                    new GameResponse
+                                RequestState = RequestState.Success,
+                                GameResponseType = GameResponseType.Preparation,
+                                GameResponseData = JsonConvert.SerializeObject(
+                                    new GameResponsePowerOption
                                     {
-                                        RequestState = RequestState.Success,
-                                        GameResponseType = GameResponseType.Preparation,
-                                        GameResponseData = JsonConvert.SerializeObject(
-                                            new GameResponsePowerOption
-                                            {
-                                                PowerOption = powerOption
-                                            })
+                                        PowerOption = powerOption
                                     })
                             })
                     })
@@ -378,13 +335,29 @@ namespace SabberStoneCommon.Contract
 
     }
 
-    public class DataPacket
+
+
+    [ProtoContract]
+    public class SabberDataPacket
     {
+        [ProtoMember(1)]
         public virtual int Id { get; set; }
-
+        [ProtoMember(2)]
         public virtual string Token { get; set; }
+        [ProtoMember(3)]
+        public virtual MessageType MessageType { get; set; }
+        [ProtoMember(4)]
+        public virtual string MessageData { get; set; }
+    }
 
-        public virtual string SendData { get; set; }
+    public enum MessageType
+    {
+        None,
+        HandShake,
+        Stats,
+        Queue,
+        Response,
+        Game
     }
 
     public class HandShakeRequest

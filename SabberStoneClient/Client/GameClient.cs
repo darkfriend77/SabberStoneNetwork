@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Threading;
 using GodSharp.Sockets;
 using Newtonsoft.Json;
+using ProtoBuf;
 using SabberStoneClient.Event;
 using SabberStoneCommon;
 using SabberStoneCommon.Contract;
@@ -96,6 +98,26 @@ namespace SabberStoneClient.Client
 
             HistoryEntries = new ConcurrentQueue<IPowerHistoryEntry>();
             PowerOptionList = new List<PowerOption>();
+
+            var tt = new SabberDataPacket { Id = 1 };
+            using (var mem = new MemoryStream())
+            {
+                Serializer.Serialize(mem, tt);
+                _gameClient.Connection.Send(mem.GetBuffer());
+                var nn = Serializer.Deserialize<SabberDataPacket>(mem);
+            }
+        }
+
+        public byte[] ProtoSerialize(SabberDataPacket data)
+        {
+            var mem = new MemoryStream();
+            Serializer.Serialize(mem, data);
+            return mem.GetBuffer();
+        }
+
+        public SabberDataPacket ProtoDeserialize(byte[] buffer)
+        {
+            return Serializer.Deserialize<SabberDataPacket>(new MemoryStream(buffer));
         }
 
         private void OnStopped(NetClientEventArgs<ITcpConnection> c)
@@ -117,20 +139,18 @@ namespace SabberStoneClient.Client
         {
             //Log("INFO", $"Received from {c.RemoteEndPoint}:");
             //Log("INFO", string.Join(" ", c.Buffers.Select(x => x.ToString("X2")).ToArray()));
-            string message = Encoding.UTF8.GetString(c.Buffers, 0, c.Buffers.Length);
-            var dataPacket = JsonConvert.DeserializeObject<DataPacket>(message);
-            var sendData = JsonConvert.DeserializeObject<SendData>(dataPacket.SendData);
+            var sDataPacket = DataPacketBuilder.Deserialize(c.Buffers);
 
-            switch (sendData.MessageType)
+            switch (sDataPacket.MessageType)
             {
                 case MessageType.Response:
-                    var response = JsonConvert.DeserializeObject<Response>(sendData.MessageData);
-                    Log("INFO", $"Message[{sendData.MessageType}]: {response.ResponseType} => {response.RequestState}");
+                    var response = JsonConvert.DeserializeObject<Response>(sDataPacket.MessageData);
+                    Log("INFO", $"Message[{sDataPacket.MessageType}]: {response.ResponseType} => {response.RequestState}");
                     ProcessResponse(response);
                     break;
 
                 case MessageType.Game:
-                    var gameData = JsonConvert.DeserializeObject<GameData>(sendData.MessageData);
+                    var gameData = JsonConvert.DeserializeObject<GameData>(sDataPacket.MessageData);
                     if (gameData.GameMessageType == GameMessageType.GameRequest)
                     {
                         var gameRequest = JsonConvert.DeserializeObject<GameRequest>(gameData.GameMessageData);
@@ -144,7 +164,7 @@ namespace SabberStoneClient.Client
                     break;
 
                 default:
-                    Log("WARN", $"[Id:{dataPacket.Id}][Token:{dataPacket.Token}][{sendData.MessageType}] Not implemented! (Sent:{c.RemoteEndPoint})");
+                    Log("WARN", $"[Id:{sDataPacket.Id}][Token:{sDataPacket.Token}][{sDataPacket.MessageType}] Not implemented! (Sent:{c.RemoteEndPoint})");
                     break;
             }
 
@@ -194,7 +214,7 @@ namespace SabberStoneClient.Client
             }
 
             ClientState = ClientState.HandShake;
-            _gameClient.Connection.Send(DataPacketBuilder.RequestClientHandShake(_id, _token, accountName), Encoding.UTF8);
+            _gameClient.Connection.Send(DataPacketBuilder.RequestClientHandShake(_id, _token, accountName));
         }
 
         public void RequestStats()
@@ -205,7 +225,7 @@ namespace SabberStoneClient.Client
                 return;
             }
 
-            _gameClient.Connection.Send(DataPacketBuilder.RequestClientStats(_id, _token), Encoding.UTF8);
+            _gameClient.Connection.Send(DataPacketBuilder.RequestClientStats(_id, _token));
         }
 
         public void RequestQueue(GameType gameType)
@@ -216,7 +236,7 @@ namespace SabberStoneClient.Client
                 return;
             }
 
-            _gameClient.Connection.Send(DataPacketBuilder.RequestClientQueue(_id, _token, gameType), Encoding.UTF8);
+            _gameClient.Connection.Send(DataPacketBuilder.RequestClientQueue(_id, _token, gameType));
         }
 
         #endregion
@@ -307,7 +327,7 @@ namespace SabberStoneClient.Client
                         ResponsePreparation(DeckType.Random, string.Empty, RequestState.Success);
                     }
                     break;
-                    
+
                 case GameRequestType.GameStart:
                     var gameRequestGameStart = JsonConvert.DeserializeObject<GameRequestGameStart>(gameRequest.GameRequestData);
                     Player1 = gameRequestGameStart.Player1;
@@ -341,17 +361,17 @@ namespace SabberStoneClient.Client
 
         public void ResponseInvitation(RequestState requestState)
         {
-            _gameClient.Connection.Send(DataPacketBuilder.ResponseClientGameInvitation(_id, _token, _gameId, requestState), Encoding.UTF8);
+            _gameClient.Connection.Send(DataPacketBuilder.ResponseClientGameInvitation(_id, _token, _gameId, requestState));
         }
 
         public void ResponsePreparation(DeckType deckType, string deckString, RequestState requestState)
         {
-            _gameClient.Connection.Send(DataPacketBuilder.ResponseClientGamePreparation(_id, _token, _gameId, deckType, deckString, requestState), Encoding.UTF8);
+            _gameClient.Connection.Send(DataPacketBuilder.ResponseClientGamePreparation(_id, _token, _gameId, deckType, deckString, requestState));
         }
 
         public void ResponsePowerOption(PowerOption powerOption)
         {
-            _gameClient.Connection.Send(DataPacketBuilder.ResponseClientGamePowerOption(_id, _token, _gameId, powerOption), Encoding.UTF8);
+            _gameClient.Connection.Send(DataPacketBuilder.ResponseClientGamePowerOption(_id, _token, _gameId, powerOption));
         }
 
         #endregion

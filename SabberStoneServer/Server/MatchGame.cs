@@ -4,8 +4,6 @@ using System.Reflection;
 using GodSharp.Sockets;
 using Newtonsoft.Json;
 using SabberStoneCommon.Contract;
-using SabberStoneServer.Packet;
-using System.Text;
 using System.Threading;
 using log4net;
 using SabberStoneCore.Config;
@@ -70,11 +68,11 @@ namespace SabberStoneServer.Server
         {
             // game invitation request for player 1
             _player1.PlayerState = PlayerState.Invitation;
-            _player1.Connection.Send(DataPacketBuilder.RequestServerGameInvitation(_id, _token, _gameId, 1), Encoding.UTF8);
+            _player1.Connection.Send(DataPacketBuilder.RequestServerGameInvitation(_id, _token, _gameId, 1));
 
             // game invitation request for player 2
             _player2.PlayerState = PlayerState.Invitation;
-            _player2.Connection.Send(DataPacketBuilder.RequestServerGameInvitation(_id, _token, _gameId, 2), Encoding.UTF8);
+            _player2.Connection.Send(DataPacketBuilder.RequestServerGameInvitation(_id, _token, _gameId, 2));
         }
 
         public void Start()
@@ -123,14 +121,14 @@ namespace SabberStoneServer.Server
         private void ProcessPowerOptionsData(int playerId, UserInfoData userInfoData, PowerAllOptions allOptions)
         {
 
-            userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePowerOptions(_id, _token, _gameId, playerId, allOptions.Index, allOptions.PowerOptionList), Encoding.UTF8);
+            userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePowerOptions(_id, _token, _gameId, playerId, allOptions.Index, allOptions.PowerOptionList));
         }
 
         private void ProcessPowerHistoryData(int playerId, UserInfoData userInfoData, List<IPowerHistoryEntry> powerHistoryLast)
         {
             foreach (var historyEntry in powerHistoryLast)
             {
-                userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePowerHistory(_id, _token, _gameId, playerId, historyEntry), Encoding.UTF8);
+                userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePowerHistory(_id, _token, _gameId, playerId, historyEntry));
                 //Log.Warn($"[_gameId:{_gameId}] should be stopped here, isn't implemented!!!");
                 Thread.Sleep(50);
             }
@@ -177,7 +175,7 @@ namespace SabberStoneServer.Server
                 case GameResponseType.Invitation:
 
                     _gameServer.ChangeUserState(userInfoData, UserState.Prepared);
-                    userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePreparation(_id, _token, _gameId), Encoding.UTF8);
+                    userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePreparation(_id, _token, _gameId));
                     break;
 
                 case GameResponseType.Preparation:
@@ -188,8 +186,8 @@ namespace SabberStoneServer.Server
                     _gameServer.ChangeUserState(userInfoData, UserState.InGame);
                     if (_player1.UserState == UserState.InGame && _player2.UserState == UserState.InGame)
                     {
-                        _player1.Connection.Send(DataPacketBuilder.RequestServerGameStart(_id, _token, _gameId, _player1, _player2), Encoding.UTF8);
-                        _player2.Connection.Send(DataPacketBuilder.RequestServerGameStart(_id, _token, _gameId, _player1, _player2), Encoding.UTF8);
+                        _player1.Connection.Send(DataPacketBuilder.RequestServerGameStart(_id, _token, _gameId, _player1, _player2));
+                        _player2.Connection.Send(DataPacketBuilder.RequestServerGameStart(_id, _token, _gameId, _player1, _player2));
                         Thread.Sleep(500);
                         Start();
                     }

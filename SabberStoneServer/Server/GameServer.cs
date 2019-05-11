@@ -1,19 +1,14 @@
 ﻿using GodSharp.Sockets;
-using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.Serialization.Json;
 using System.Text;
 using log4net;
 using log4net.Config;
-using log4net.Repository.Hierarchy;
 using Newtonsoft.Json;
-using SabberStoneCommon;
 using SabberStoneCommon.Contract;
-using SabberStoneServer.Packet;
 using SabberStoneServer.Server;
 
 namespace SabberStoneServer
@@ -86,32 +81,31 @@ namespace SabberStoneServer
         private void OnReceived(NetClientReceivedEventArgs<ITcpConnection> c)
         {
             //Log("INFO", string.Join(" ", c.Buffers.Select(x => x.ToString("X2")).ToArray()));
-            string message = Encoding.UTF8.GetString(c.Buffers, 0, c.Buffers.Length);
-            var dataPacket = JsonConvert.DeserializeObject<DataPacket>(message);
-            var sendData = JsonConvert.DeserializeObject<SendData>(dataPacket.SendData);
-            Log.Info($"Received from {dataPacket.Id}: {sendData.MessageType}");
+
+            var sendData = DataPacketBuilder.Deserialize(c.Buffers);
+            Log.Info($"Received from {sendData.Id}: {sendData.MessageType}");
             switch (sendData.MessageType)
             {
                 case MessageType.HandShake:
-                    c.NetConnection.Send(ResponseHandShake(c.NetConnection, dataPacket.Id, dataPacket.Token, sendData), Encoding.UTF8);
+                    c.NetConnection.Send(ResponseHandShake(c.NetConnection, sendData.Id, sendData.Token, sendData));
                     break;
 
                 case MessageType.Stats:
-                    c.NetConnection.Send(ResponseStats(c.NetConnection, dataPacket.Id, dataPacket.Token, sendData), Encoding.UTF8);
+                    c.NetConnection.Send(ResponseStats(c.NetConnection, sendData.Id, sendData.Token, sendData));
                     break;
 
                 case MessageType.Queue:
-                    c.NetConnection.Send(ResponseQueue(c.NetConnection, dataPacket.Id, dataPacket.Token, sendData), Encoding.UTF8);
+                    c.NetConnection.Send(ResponseQueue(c.NetConnection, sendData.Id, sendData.Token, sendData));
                     break;
 
                 case MessageType.Game:
-                    _matchMaker.ProcessData(c.NetConnection, dataPacket.Id, dataPacket.Token, JsonConvert.DeserializeObject<GameData>(sendData.MessageData));
+                    _matchMaker.ProcessData(c.NetConnection, sendData.Id, sendData.Token, JsonConvert.DeserializeObject<GameData>(sendData.MessageData));
                     break;
 
                 case MessageType.Response:
                 case MessageType.None:
                 default:
-                    Log.Warn($"[Id:{dataPacket.Id}][Token:{dataPacket.Token}][{sendData.MessageType}] Not implemented! (Sent:{c.RemoteEndPoint})");
+                    Log.Warn($"[Id:{sendData.Id}][Token:{sendData.Token}][{sendData.MessageType}] Not implemented! (Sent:{c.RemoteEndPoint})");
                     break;
             }
             //c.NetConnection.Send(c.Buffers);
@@ -132,7 +126,7 @@ namespace SabberStoneServer
             }
         }
 
-        private string ResponseQueue(ITcpConnection connection, int dataPacketId, string dataPacketToken, SendData sendData)
+        private byte[] ResponseQueue(ITcpConnection connection, int dataPacketId, string dataPacketToken, SabberDataPacket sendData)
         {
             var requestState = RequestState.Success;
 
@@ -148,7 +142,7 @@ namespace SabberStoneServer
             return DataPacketBuilder.ResponseServerQueue(_id, _token, requestState, 0);
         }
 
-        private string ResponseStats(ITcpConnection connection, int dataPacketId, string dataPacketToken, SendData sendData)
+        private byte[] ResponseStats(ITcpConnection connection, int dataPacketId, string dataPacketToken, SabberDataPacket sendData)
         {
             var list = new List<UserInfo>();
             _registredUsers.Values.ToList().ForEach(p =>
@@ -166,7 +160,7 @@ namespace SabberStoneServer
             return DataPacketBuilder.ResponseServerStats(_id, _token, RequestState.Success, list);
         }
 
-        private string ResponseHandShake(ITcpConnection connection, int dataPacketId, string dataPacketToken, SendData sendData)
+        private byte[] ResponseHandShake(ITcpConnection connection, int dataPacketId, string dataPacketToken, SabberDataPacket sendData)
         {
             var handShake = JsonConvert.DeserializeObject<HandShakeRequest>(sendData.MessageData);
             var requestState = RequestState.Success;
