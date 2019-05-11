@@ -34,22 +34,6 @@ namespace SabberStoneCommon.PowerObjects
 
     public class PowerJsonHelper
     {
-
-        public static KnownTypesBinder KnownTypesBinder => new KnownTypesBinder
-        {
-            KnownTypes = new List<System.Type>
-            {
-                typeof(PowerHistoryFullEntity),
-                typeof(PowerHistoryShowEntity),
-                typeof(PowerHistoryHideEntity),
-                typeof(PowerHistoryTagChange),
-                typeof(PowerHistoryBlockStart),
-                typeof(PowerHistoryBlockEnd),
-                typeof(PowerHistoryCreateGame),
-                typeof(PowerHistoryMetaData)
-            }
-        };
-
         public static PowerHistoryStruct[] Serialize(List<IPowerHistoryEntry> powerHistoryEntries)
         {
             var powerHistoryStructs = new List<PowerHistoryStruct>();

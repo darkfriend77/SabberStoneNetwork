@@ -22,6 +22,13 @@ namespace SabberStoneCommon.Contract
             return Serializer.Deserialize<SabberDataPacket>(new MemoryStream(buffer));
         }
 
+        private static byte[] SerializePowerHistory(List<IPowerHistoryEntry> data)
+        {
+            var mem = new MemoryStream();
+            Serializer.Serialize(mem, data);
+            return mem.ToArray();
+        }
+
         #region CLIENT_REQUESTS
         public static byte[] RequestClientHandShake(int id, string token, string accountName)
         {
@@ -192,7 +199,7 @@ namespace SabberStoneCommon.Contract
                     })
             });
         }
-        public static byte[] RequestServerGamePowerHistory(int id, string token, int gameId, int playerId, IPowerHistoryEntry powerHistoryLast)
+        public static byte[] RequestServerGamePowerHistory(int id, string token, int gameId, int playerId, List<IPowerHistoryEntry> powerHistoryLast)
         {
             return Serialize(new SabberDataPacket()
             {
@@ -208,29 +215,7 @@ namespace SabberStoneCommon.Contract
                             new GameRequestPowerHistory
                             {
                                 PlayerId = playerId,
-                                PowerType = powerHistoryLast.PowerType,
-                                PowerHistory = PowerJsonHelper.Serialize(powerHistoryLast)
-                            })
-                    })
-            });
-        }
-        public static byte[] RequestServerGamePowerHistoryX(int id, string token, int gameId, int playerId, List<IPowerHistoryEntry> powerHistoryLast)
-        {
-            return Serialize(new SabberDataPacket()
-            {
-                Id = id,
-                Token = token,
-                GameId = gameId,
-                MessageType = MessageType.GameRequest,
-                MessageData = JsonConvert.SerializeObject(
-                    new GameRequest
-                    {
-                        GameRequestType = GameRequestType.PowerHistory,
-                        GameRequestData = JsonConvert.SerializeObject(
-                            new GameRequestPowerHistoryX
-                            {
-                                PlayerId = playerId,
-                                PowerHistory = JsonConvert.SerializeObject(PowerJsonHelper.Serialize(powerHistoryLast))
+                                PowerHistory = JsonConvert.SerializeObject(powerHistoryLast)
                             })
                     })
             });

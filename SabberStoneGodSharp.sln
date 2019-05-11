@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28803.352
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SabberStoneGodSharp", "SabberStoneGodSharp\SabberStoneGodSharp.csproj", "{0F9D267D-0638-47FE-9A45-AAB5690EC09A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SabberStoneGodSharp", "SabberStoneGodSharp\SabberStoneGodSharp.csproj", "{0F9D267D-0638-47FE-9A45-AAB5690EC09A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SabberStoneClient", "SabberStoneClient\SabberStoneClient.csproj", "{33AAEE7E-13A4-4956-909C-FBEB98FEC0C8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SabberStoneClient", "SabberStoneClient\SabberStoneClient.csproj", "{33AAEE7E-13A4-4956-909C-FBEB98FEC0C8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SabberStoneCommon", "SabberStoneCommon\SabberStoneCommon.csproj", "{076FA17B-5B22-4FD0-8D6C-5D0AC45E5B13}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SabberStoneCommon", "SabberStoneCommon\SabberStoneCommon.csproj", "{076FA17B-5B22-4FD0-8D6C-5D0AC45E5B13}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SabberStoneServer", "SabberStoneServer\SabberStoneServer.csproj", "{6D5EB476-3B2E-4976-A95E-9C3E11C8D946}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SabberStoneServer", "SabberStoneServer\SabberStoneServer.csproj", "{6D5EB476-3B2E-4976-A95E-9C3E11C8D946}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SabberStoneTest", "SabberStoneTest\SabberStoneTest.csproj", "{D71B3BF6-5B41-41F0-9FCF-D2A985240AA5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{6D5EB476-3B2E-4976-A95E-9C3E11C8D946}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6D5EB476-3B2E-4976-A95E-9C3E11C8D946}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6D5EB476-3B2E-4976-A95E-9C3E11C8D946}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D71B3BF6-5B41-41F0-9FCF-D2A985240AA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D71B3BF6-5B41-41F0-9FCF-D2A985240AA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D71B3BF6-5B41-41F0-9FCF-D2A985240AA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D71B3BF6-5B41-41F0-9FCF-D2A985240AA5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

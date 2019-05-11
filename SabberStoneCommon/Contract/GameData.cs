@@ -50,12 +50,6 @@ namespace SabberStoneCommon.Contract
     public class GameRequestPowerHistory
     {
         public virtual int PlayerId { get; set; }
-        public virtual PowerType PowerType { get; set; }
-        public virtual string PowerHistory { get; set; }
-    }
-    public class GameRequestPowerHistoryX
-    {
-        public virtual int PlayerId { get; set; }
         public virtual string PowerHistory { get; set; }
     }
     public class GameRequestPowerAllOptions

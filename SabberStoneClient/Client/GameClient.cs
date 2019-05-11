@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using GodSharp.Sockets;
@@ -117,6 +118,7 @@ namespace SabberStoneClient.Client
 
         private void OnReceived(NetClientReceivedEventArgs<ITcpConnection> c)
         {
+            //Log("INFO", $"BufferSize received: {c.Buffers.Length}");
             //Log("INFO", $"Received from {c.RemoteEndPoint}:");
             //Log("INFO", string.Join(" ", c.Buffers.Select(x => x.ToString("X2")).ToArray()));
             var sDataPacket = DataPacketBuilder.Deserialize(c.Buffers);
@@ -308,16 +310,9 @@ namespace SabberStoneClient.Client
                     break;
 
                 case GameRequestType.PowerHistory:
-                    var gameRequestPowerHistory = JsonConvert.DeserializeObject<GameRequestPowerHistoryX>(gameRequest.GameRequestData);
-                    //var powerHistoryEntry = PowerJsonHelper.Deserialize(gameRequestPowerHistory.PowerType, gameRequestPowerHistory.PowerHistory);
-                    var powerHistoryStructs = JsonConvert.DeserializeObject<PowerHistoryStruct[]>(gameRequestPowerHistory.PowerHistory);
-                    var powerHistoryEntries = PowerJsonHelper.Deserialize(powerHistoryStructs);
-                    foreach (var entry in powerHistoryEntries)
-                    {
-                        Log("INFO", $"{gameRequestPowerHistory.PlayerId} {entry.Print()}");
-                    }
-                    //Log("INFO", $"{powerHistoryEntry.Print()}");
-                    //HistoryEntries.Enqueue(powerHistoryEntry);
+                    var gameRequestPowerHistory = JsonConvert.DeserializeObject<GameRequestPowerHistory>(gameRequest.GameRequestData);
+                    var powerHistoryEntries = JsonConvert.DeserializeObject<List<IPowerHistoryEntry>>(gameRequestPowerHistory.PowerHistory, new PowerHistoryConverter());
+                    powerHistoryEntries.ForEach(p => HistoryEntries.Enqueue(p));
                     break;
 
                 case GameRequestType.PowerAllOptions:
@@ -325,7 +320,9 @@ namespace SabberStoneClient.Client
                     if (gameRequestPowerAllOptions.PowerOptionList != null &&
                         gameRequestPowerAllOptions.PowerOptionList.Count > 0)
                     {
+                        PowerOptionList = gameRequestPowerAllOptions.PowerOptionList;
                         OnPowerOptionsEvent?.Invoke(this, new PowerOptionsEventArgs(gameRequestPowerAllOptions.PowerOptionList));
+                        //PowerOptionList.ForEach(p => Log("INFO", p.Print()));
                     }
                     break;
 
