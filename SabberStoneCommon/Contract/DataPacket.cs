@@ -214,6 +214,27 @@ namespace SabberStoneCommon.Contract
                     })
             });
         }
+        public static byte[] RequestServerGamePowerHistoryX(int id, string token, int gameId, int playerId, List<IPowerHistoryEntry> powerHistoryLast)
+        {
+            return Serialize(new SabberDataPacket()
+            {
+                Id = id,
+                Token = token,
+                GameId = gameId,
+                MessageType = MessageType.GameRequest,
+                MessageData = JsonConvert.SerializeObject(
+                    new GameRequest
+                    {
+                        GameRequestType = GameRequestType.PowerHistory,
+                        GameRequestData = JsonConvert.SerializeObject(
+                            new GameRequestPowerHistoryX
+                            {
+                                PlayerId = playerId,
+                                PowerHistory = JsonConvert.SerializeObject(PowerJsonHelper.Serialize(powerHistoryLast))
+                            })
+                    })
+            });
+        }
         public static byte[] RequestServerGamePowerOptions(int id, string token, int gameId, int playerId, int index, List<PowerOption> powerOptionList)
         {
             return Serialize(new SabberDataPacket()

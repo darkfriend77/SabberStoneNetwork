@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using System.Text;
 using GodSharp.Sockets;
 using Newtonsoft.Json;
 using SabberStoneCommon.Contract;
@@ -101,15 +103,15 @@ namespace SabberStoneServer.Server
 
                 ProcessPowerHistoryData(1, _player1, _game.PowerHistory.Last);
 
-                _powerAllOptionsPlayer1 = PowerOptionsBuilder.AllOptions(_game, _game.Player1.Options());
+                //_powerAllOptionsPlayer1 = PowerOptionsBuilder.AllOptions(_game, _game.Player1.Options());
 
-                ProcessPowerOptionsData(1, _player1, _powerAllOptionsPlayer1);
+                //ProcessPowerOptionsData(1, _player1, _powerAllOptionsPlayer1);
 
                 ProcessPowerHistoryData(2, _player2, _game.PowerHistory.Last);
 
-                _powerAllOptionsPlayer2 = PowerOptionsBuilder.AllOptions(_game, _game.Player2.Options());
+                //_powerAllOptionsPlayer2 = PowerOptionsBuilder.AllOptions(_game, _game.Player2.Options());
 
-                ProcessPowerOptionsData(2, _player2, _powerAllOptionsPlayer2);
+                //ProcessPowerOptionsData(2, _player2, _powerAllOptionsPlayer2);
 
                 foreach (var historyEntry in _game.PowerHistory.Last)
                 {
@@ -120,21 +122,39 @@ namespace SabberStoneServer.Server
 
         private void ProcessPowerOptionsData(int playerId, UserInfoData userInfoData, PowerAllOptions allOptions)
         {
-
             userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePowerOptions(_id, _token, _gameId, playerId, allOptions.Index, allOptions.PowerOptionList));
         }
 
         private void ProcessPowerHistoryData(int playerId, UserInfoData userInfoData, List<IPowerHistoryEntry> powerHistoryLast)
         {
-            foreach (var historyEntry in powerHistoryLast)
-            {
-                userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePowerHistory(_id, _token, _gameId, playerId, historyEntry));
-                //Log.Warn($"[_gameId:{_gameId}] should be stopped here, isn't implemented!!!");
-                Thread.Sleep(50);
-            }
-            
-            //userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePowerHistoryX(_id, "matchgame", _gameId, playerId, powerHistoryLast), Encoding.UTF8);
+            //foreach (var historyEntry in powerHistoryLast)
+            //{
+            //    userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePowerHistory(_id, _token, _gameId, playerId, historyEntry));
+            //    //Log.Warn($"[_gameId:{_gameId}] should be stopped here, isn't implemented!!!");
+            //    Thread.Sleep(50);
+            //}
 
+            int batchSize = 50;
+            for (int i = 0; i < powerHistoryLast.Count;)
+            {
+                var count = powerHistoryLast.Count - i > batchSize ? batchSize : powerHistoryLast.Count - i;
+                var batch = powerHistoryLast.GetRange(i, count);
+                userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePowerHistoryX(_id, "matchgame", _gameId, playerId, batch));
+                i += count;
+                Thread.Sleep(100);
+            }
+
+            //int maxBatch = 50;
+            //while (powerHistoryLast.Any())
+            //{
+            //    var batch = powerHistoryLast.GetRange(0, powerHistoryLast.Count > maxBatch ? maxBatch : powerHistoryLast.Count);
+            //    userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePowerHistoryX(_id, "matchgame", _gameId, playerId, batch));
+            //    powerHistoryLast.RemoveRange(0, powerHistoryLast.Count > maxBatch ? maxBatch : powerHistoryLast.Count);
+            //    Thread.Sleep(25);
+            //}
+
+            //userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePowerHistoryX(_id, "matchgame", _gameId, playerId, powerHistoryLast));
+            //Thread.Sleep(25);
         }
 
         public void Stop()

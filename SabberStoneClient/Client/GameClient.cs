@@ -98,26 +98,6 @@ namespace SabberStoneClient.Client
 
             HistoryEntries = new ConcurrentQueue<IPowerHistoryEntry>();
             PowerOptionList = new List<PowerOption>();
-
-            var tt = new SabberDataPacket { Id = 1 };
-            using (var mem = new MemoryStream())
-            {
-                Serializer.Serialize(mem, tt);
-                _gameClient.Connection.Send(mem.GetBuffer());
-                var nn = Serializer.Deserialize<SabberDataPacket>(mem);
-            }
-        }
-
-        public byte[] ProtoSerialize(SabberDataPacket data)
-        {
-            var mem = new MemoryStream();
-            Serializer.Serialize(mem, data);
-            return mem.GetBuffer();
-        }
-
-        public SabberDataPacket ProtoDeserialize(byte[] buffer)
-        {
-            return Serializer.Deserialize<SabberDataPacket>(new MemoryStream(buffer));
         }
 
         private void OnStopped(NetClientEventArgs<ITcpConnection> c)
@@ -328,9 +308,16 @@ namespace SabberStoneClient.Client
                     break;
 
                 case GameRequestType.PowerHistory:
-                    var gameRequestPowerHistory = JsonConvert.DeserializeObject<GameRequestPowerHistory>(gameRequest.GameRequestData);
-                    var powerHistoryEntry = PowerJsonHelper.Deserialize(gameRequestPowerHistory.PowerType, gameRequestPowerHistory.PowerHistory);
-                    HistoryEntries.Enqueue(powerHistoryEntry);
+                    var gameRequestPowerHistory = JsonConvert.DeserializeObject<GameRequestPowerHistoryX>(gameRequest.GameRequestData);
+                    //var powerHistoryEntry = PowerJsonHelper.Deserialize(gameRequestPowerHistory.PowerType, gameRequestPowerHistory.PowerHistory);
+                    var powerHistoryStructs = JsonConvert.DeserializeObject<PowerHistoryStruct[]>(gameRequestPowerHistory.PowerHistory);
+                    var powerHistoryEntries = PowerJsonHelper.Deserialize(powerHistoryStructs);
+                    foreach (var entry in powerHistoryEntries)
+                    {
+                        Log("INFO", $"{gameRequestPowerHistory.PlayerId} {entry.Print()}");
+                    }
+                    //Log("INFO", $"{powerHistoryEntry.Print()}");
+                    //HistoryEntries.Enqueue(powerHistoryEntry);
                     break;
 
                 case GameRequestType.PowerAllOptions:

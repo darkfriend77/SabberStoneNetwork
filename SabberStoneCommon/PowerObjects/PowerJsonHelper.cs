@@ -26,9 +26,7 @@ namespace SabberStoneCommon.PowerObjects
         }
     }
 
-
-
-    public struct PowerHistoryStruct
+    public class PowerHistoryStruct
     {
         public PowerType PowerType { get; set; }
         public string PowerHistoryString { get; set; }
@@ -52,29 +50,20 @@ namespace SabberStoneCommon.PowerObjects
             }
         };
 
-        public static string Serialize(List<IPowerHistoryEntry> powerHistoryEntries)
+        public static PowerHistoryStruct[] Serialize(List<IPowerHistoryEntry> powerHistoryEntries)
         {
-            return JsonConvert.SerializeObject(powerHistoryEntries, Formatting.Indented, new JsonSerializerSettings
+            var powerHistoryStructs = new List<PowerHistoryStruct>();
+            foreach (var powerHistoryEntry in powerHistoryEntries)
             {
-                TypeNameHandling = TypeNameHandling.Objects,
-                SerializationBinder = KnownTypesBinder
-            });
+                powerHistoryStructs.Add(
+                    new PowerHistoryStruct
+                    {
+                        PowerType = powerHistoryEntry.PowerType,
+                        PowerHistoryString = Serialize(powerHistoryEntry)
+                    });
+            }
+            return powerHistoryStructs.ToArray();
         }
-
-        //public static List<PowerHistoryStruct> Serialize(List<IPowerHistoryEntry> PowerHistoryEntries)
-        //{
-        //    var powerHistoryStructs = new List<PowerHistoryStruct>();
-        //    foreach (var powerHistoryEntry in PowerHistoryEntries)
-        //    {
-        //        powerHistoryStructs.Add(
-        //            new PowerHistoryStruct
-        //            {
-        //                PowerType = powerHistoryEntry.PowerType,
-        //                PowerHistoryString = Serialize(powerHistoryEntry)
-        //            });
-        //    }
-        //    return powerHistoryStructs;
-        //}
 
         public static string Serialize(PowerAllOptions powerAllOptions)
         {
@@ -108,7 +97,7 @@ namespace SabberStoneCommon.PowerObjects
             }
         }
 
-        public static List<IPowerHistoryEntry> Deserialize(List<PowerHistoryStruct> powerHistoryStructs)
+        public static List<IPowerHistoryEntry> Deserialize(PowerHistoryStruct[] powerHistoryStructs)
         {
             var powerHistoryEntries = new List<IPowerHistoryEntry>();
             foreach (var powerHistoryStruct in powerHistoryStructs)
