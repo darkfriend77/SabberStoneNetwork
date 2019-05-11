@@ -61,7 +61,7 @@ namespace SabberStoneServer.Server
         public void Start()
         {
             var startTimeSpan = TimeSpan.Zero;
-            var periodTimeSpan = TimeSpan.FromSeconds(15);
+            var periodTimeSpan = TimeSpan.FromSeconds(7);
 
             _timer.Change(startTimeSpan, periodTimeSpan);
         }

@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using ProtoBuf;
 using SabberStoneCommon.PowerObjects;
 using SabberStoneCore.Kettle;
+using SabberStoneCore.Model.Zones;
 
 namespace SabberStoneCommon.Contract
 {
@@ -285,7 +286,7 @@ namespace SabberStoneCommon.Contract
                     })
             });
         }
-        public static byte[] ResponseClientGamePowerOption(int id, string token, int gameId, PowerOption powerOption)
+        public static byte[] ResponseClientGamePowerOption(int id, string token, int gameId, PowerOption powerOption, int target, int position, int subOption)
         {
             return Serialize(new SabberDataPacket()
             {
@@ -297,11 +298,14 @@ namespace SabberStoneCommon.Contract
                     new GameResponse
                     {
                         RequestState = RequestState.Success,
-                        GameResponseType = GameResponseType.Preparation,
+                        GameResponseType = GameResponseType.PowerOption,
                         GameResponseData = JsonConvert.SerializeObject(
                             new GameResponsePowerOption
                             {
-                                PowerOption = powerOption
+                                PowerOption = powerOption,
+                                Target = target,
+                                Position = position,
+                                SubOption = subOption
                             })
                     })
             });

@@ -41,6 +41,8 @@ namespace SabberStoneClient.Client
 
         private readonly bool _isBot;
 
+        private readonly Random _random;
+
         public List<UserInfo> UserInfos { get; }
 
         public ConcurrentQueue<IPowerHistoryEntry> HistoryEntries { get; }
@@ -80,6 +82,8 @@ namespace SabberStoneClient.Client
         {
             Log("INFO", "SabberStone TCP Client!");
             _isBot = isBot;
+            _random = new Random();
+
             _gameClient = new TcpClient("127.0.0.1", 2010);
             _gameClient.OnConnected += OnConnected;
             _gameClient.OnDisconnected += OnDisconnected;
@@ -118,7 +122,7 @@ namespace SabberStoneClient.Client
 
         private void OnReceived(NetClientReceivedEventArgs<ITcpConnection> c)
         {
-            //Log("INFO", $"BufferSize received: {c.Buffers.Length}");
+            Log("INFO", $"BufferSize received: {c.Buffers.Length}");
             //Log("INFO", $"Received from {c.RemoteEndPoint}:");
             //Log("INFO", string.Join(" ", c.Buffers.Select(x => x.ToString("X2")).ToArray()));
             var sDataPacket = DataPacketBuilder.Deserialize(c.Buffers);
@@ -264,6 +268,7 @@ namespace SabberStoneClient.Client
 
         private void ProcessGameRequest(GameRequest gameRequest)
         {
+            //Log("INFO", $"{gameRequest.GameRequestType}");
             switch (gameRequest.GameRequestType)
             {
                 case GameRequestType.Invitation:
@@ -323,7 +328,22 @@ namespace SabberStoneClient.Client
                         PowerOptionList = gameRequestPowerAllOptions.PowerOptionList;
                         OnPowerOptionsEvent?.Invoke(this, new PowerOptionsEventArgs(gameRequestPowerAllOptions.PowerOptionList));
                         //PowerOptionList.ForEach(p => Log("INFO", p.Print()));
+
+                        if (_isBot)
+                        {
+                            var powerOption = PowerOptionList.ElementAt(_random.Next(PowerOptionList.Count));
+                            var target = powerOption.MainOption?.Targets != null && powerOption.MainOption.Targets.Count > 0
+                                ? powerOption.MainOption.Targets.ElementAt(_random.Next(powerOption.MainOption.Targets.Count))
+                                : 0;
+                            var subOption = powerOption.SubOptions != null && powerOption.SubOptions.Count > 0
+                                ? _random.Next(powerOption.SubOptions.Count)
+                                : 0;
+                            ResponsePowerOption(powerOption, target, 0, subOption);
+                            Log("INFO", $"target:{target}, position:0, suboption: {subOption}, PRINT: {powerOption.Print()}");
+                            PowerOptionList.Clear();
+                        }
                     }
+
                     break;
 
                 default:
@@ -345,9 +365,9 @@ namespace SabberStoneClient.Client
             _gameClient.Connection.Send(DataPacketBuilder.ResponseClientGamePreparation(_id, _token, _gameId, deckType, deckString, requestState));
         }
 
-        public void ResponsePowerOption(PowerOption powerOption)
+        public void ResponsePowerOption(PowerOption powerOption, int target, int position, int subOption)
         {
-            _gameClient.Connection.Send(DataPacketBuilder.ResponseClientGamePowerOption(_id, _token, _gameId, powerOption));
+            _gameClient.Connection.Send(DataPacketBuilder.ResponseClientGamePowerOption(_id, _token, _gameId, powerOption, target, position, subOption));
         }
 
         #endregion

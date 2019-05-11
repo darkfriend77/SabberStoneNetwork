@@ -61,6 +61,9 @@ namespace SabberStoneCommon.Contract
     public class GameResponsePowerOption
     {
         public virtual PowerOption PowerOption { get; set; }
+        public virtual int Target { get; set; }
+        public virtual int Position { get; set; }
+        public virtual int SubOption { get; set; }
     }
     public enum DeckType
     {

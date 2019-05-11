@@ -107,9 +107,13 @@ namespace SabberStoneServer.Server
             _game.StartGame();
 
             ProcessPowerHistoryData(1, _player1, _game.PowerHistory.Last);
-
             ProcessPowerHistoryData(2, _player2, _game.PowerHistory.Last);
 
+            SendPowerOptionsToPlayers();
+        }
+
+        private void SendPowerOptionsToPlayers()
+        {
             _powerAllOptionsPlayer1 = PowerOptionsBuilder.AllOptions(_game, _game.Player1.Options());
             ProcessPowerOptionsData(1, _player1, _powerAllOptionsPlayer1);
 
@@ -125,7 +129,8 @@ namespace SabberStoneServer.Server
         private void ProcessPowerHistoryData(int playerId, UserInfoData userInfoData, List<IPowerHistoryEntry> powerHistoryLast)
         {
             var buffer = DataPacketBuilder.RequestServerGamePowerHistory(_id, "matchgame", _gameId, playerId, powerHistoryLast);
-            //Log.Info($"BufferSize sending: {buffer.Length}");
+
+            Log.Info($"BufferSize sending: {buffer.Length}");
             userInfoData.Connection.Send(buffer);
         }
 
@@ -149,13 +154,11 @@ namespace SabberStoneServer.Server
             switch (gameResponse.GameResponseType)
             {
                 case GameResponseType.Invitation:
-
                     _gameServer.ChangeUserState(userInfoData, UserState.Prepared);
                     userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePreparation(_id, _token, _gameId));
                     break;
 
                 case GameResponseType.Preparation:
-
                     var gameResponsePreparation = JsonConvert.DeserializeObject<GameResponsePreparation>(gameResponse.GameResponseData);
                     userInfoData.DeckType = gameResponsePreparation.DeckType;
                     userInfoData.DeckData = gameResponsePreparation.DeckData;
@@ -170,7 +173,17 @@ namespace SabberStoneServer.Server
                     break;
 
                 case GameResponseType.PowerOption:
-                    //ProcessPowerOptionsData();
+                    var gameResponsePowerOption = JsonConvert.DeserializeObject<GameResponsePowerOption>(gameResponse.GameResponseData);
+                    var task = ProcessPowerOptionsData(gameResponsePowerOption.PowerOption, 0, 0, 0);
+                    _game.Process(task);
+                    if (_game.State == State.RUNNING)
+                    {
+                        SendPowerOptionsToPlayers();
+                    }
+                    else
+                    {
+                        Stop();
+                    }
                     break;
 
                 default:
@@ -178,18 +191,16 @@ namespace SabberStoneServer.Server
             }
         }
 
-
-        public PlayerTask ProcessPowerOptionsData(int sendOptionId, int sendOptionMainOption, int sendOptionTarget, int sendOptionPosition, int sendOptionSubOption)
+        //public PlayerTask ProcessPowerOptionsData(int sendOptionId, int sendOptionMainOption, int sendOptionTarget, int sendOptionPosition, int sendOptionSubOption)
+        public PlayerTask ProcessPowerOptionsData(PowerOption powerOption, int sendOptionTarget, int sendOptionPosition, int sendOptionSubOption)
         {
-            var allOptions = _game.AllOptionsMap[sendOptionId];
 
-            var tasks = allOptions.PlayerTaskList;
-
-            var powerOption = allOptions.PowerOptionList[sendOptionMainOption];
+            //var allOptions = _game.AllOptionsMap[sendOptionId];
+            //var tasks = allOptions.PlayerTaskList;
+            //var powerOption = allOptions.PowerOptionList[sendOptionMainOption];
             var optionType = powerOption.OptionType;
 
             PlayerTask task = null;
-
             switch (optionType)
             {
                 case OptionType.END_TURN:
@@ -211,17 +222,16 @@ namespace SabberStoneServer.Server
                         switch (source.Card.Type)
                         {
                             case CardType.HERO:
-                                if (target != null)
-                                    task = HeroAttackTask.Any(_game.CurrentPlayer, target);
-                                else
-                                    task = PlayCardTask.Any(_game.CurrentPlayer, source);
+                                task = target != null
+                                    ? (PlayerTask) HeroAttackTask.Any(_game.CurrentPlayer, target)
+                                    : PlayCardTask.Any(_game.CurrentPlayer, source);
                                 break;
                             case CardType.HERO_POWER:
                                 task = HeroPowerTask.Any(_game.CurrentPlayer, target);
                                 break;
+
                             default:
-                                task = PlayCardTask.Any(_game.CurrentPlayer, source, target, sendOptionPosition,
-                                    sendOptionSubOption);
+                                task = PlayCardTask.Any(_game.CurrentPlayer, source, target, sendOptionPosition,sendOptionSubOption);
                                 break;
                         }
                     }
@@ -233,6 +243,8 @@ namespace SabberStoneServer.Server
                 default:
                     throw new NotImplementedException();
             }
+
+            Log.Info($"{task.FullPrint()}");
 
             return task;
         }
