@@ -44,7 +44,10 @@ namespace SabberStoneServer.Server
             });
 
             var queuedUsers = _gameServer.RegistredUsers.ToList().Where(user => user.UserState == UserState.Queued).ToList();
-            Log.Info($"{queuedUsers.Count} users queued for matchmaking.");
+            if (queuedUsers.Count > 0)
+            {
+                Log.Info($"{queuedUsers.Count} users queued for matchmaking.");
+            }
 
             for (int i = 0; i < _maxGamesPerCall && queuedUsers.Count > 1; i++)
             {

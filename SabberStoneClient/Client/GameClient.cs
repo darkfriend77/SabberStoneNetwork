@@ -38,6 +38,8 @@ namespace SabberStoneClient.Client
 
         public event ClientStateEventHandler OnClientStateEvent;
 
+        public event PowerHistoryEventHandler OnPowerHistoryEvent;
+
         public event PowerOptionsEventHandler OnPowerOptionsEvent;
 
         public event LogEventHandler OnLogEvent;
@@ -325,6 +327,8 @@ namespace SabberStoneClient.Client
                     var gameRequestPowerHistory = JsonConvert.DeserializeObject<GameRequestPowerHistory>(gameRequest.GameRequestData);
                     var powerHistoryEntries = JsonConvert.DeserializeObject<List<IPowerHistoryEntry>>(gameRequestPowerHistory.PowerHistory, new PowerHistoryConverter());
                     powerHistoryEntries.ForEach(p => HistoryEntries.Enqueue(p));
+                    OnPowerHistoryEvent?.Invoke(this, new PowerHistoryEventArgs(powerHistoryEntries));
+
                     break;
 
                 case GameRequestType.PowerAllOptions:

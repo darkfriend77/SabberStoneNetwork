@@ -127,10 +127,24 @@ namespace SabberStoneServer.Server
 
         private void ProcessPowerHistoryData(int playerId, UserInfoData userInfoData, List<IPowerHistoryEntry> powerHistoryLast)
         {
-            var buffer = DataPacketBuilder.RequestServerGamePowerHistory(_id, "matchgame", GameId, playerId, powerHistoryLast);
 
-            Log.Info($"BufferSize sending: {buffer.Length}");
-            userInfoData.Connection.Send(buffer);
+            var batchSize = 25;
+            for (var i = 0; i < powerHistoryLast.Count;)
+            {
+                var count = powerHistoryLast.Count - i > batchSize ? batchSize : powerHistoryLast.Count - i;
+                var batch = powerHistoryLast.GetRange(i, count);
+                //userInfoData.Connection.Send(DataPacketBuilder.RequestServerGamePowerHistoryX(_id, "matchgame", _gameId, playerId, batch));
+                var buffer = DataPacketBuilder.RequestServerGamePowerHistory(_id, "matchgame", GameId, playerId, batch);
+                Log.Info($"BufferSize sending: {buffer.Length}");
+                userInfoData.Connection.Send(buffer);
+                i += count;
+                Thread.Sleep(100);
+            }
+
+
+            //var buffer = DataPacketBuilder.RequestServerGamePowerHistory(_id, "matchgame", GameId, playerId, powerHistoryLast);
+            //Log.Info($"BufferSize sending: {buffer.Length}");
+            //userInfoData.Connection.Send(buffer);
         }
 
         public void Stop()
@@ -178,9 +192,16 @@ namespace SabberStoneServer.Server
                     var gameResponsePowerOption = JsonConvert.DeserializeObject<GameResponsePowerOption>(gameResponse.GameResponseData);
                     var task = ProcessPowerOptionsData(gameResponsePowerOption.PowerOption, gameResponsePowerOption.Target, 0, gameResponsePowerOption.SubOption);
                     _game.Process(task);
+
+                    // send player history to both players
+                    ProcessPowerHistoryData(1, Player1, _game.PowerHistory.Last);
+                    ProcessPowerHistoryData(2, Player2, _game.PowerHistory.Last);
+                    Thread.Sleep(500);
+
                     if (_game.State == State.RUNNING)
                     {
                         SendPowerOptionsToPlayers();
+                        Thread.Sleep(500);
                     }
                     else
                     {

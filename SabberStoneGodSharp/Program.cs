@@ -22,8 +22,8 @@ namespace SabberStoneGodSharp
 
             Thread.Sleep(2000);
 
-            Thread client2 = new Thread(new ThreadStart(Client2));
-            client2.Start();
+            //Thread client2 = new Thread(new ThreadStart(Client2));
+            //client2.Start();
 
             //var gameClient1 = new GameClient();
 
@@ -66,7 +66,7 @@ namespace SabberStoneGodSharp
 
             Thread.Sleep(10000);
 
-            client.UpdatedServerStats(true);
+            //client.UpdatedServerStats(true);
         }
 
         private static void Client2()
